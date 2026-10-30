@@ -1,0 +1,627 @@
+{
+  "_comment": [
+    "Default feed list — the fallback used when the operator has not configured",
+    "any feeds in the Owner console (Settings -> RSS feeds).",
+    "Every entry was verified to return parsable entries on 2026-07-21; of 77",
+    "candidates probed, 37 were dropped (404/403/no entries).",
+    "",
+    "kind: authority | police | media | tech | cyber | other — it reaches the",
+    "graph, so an analyst can weigh a federal release against a tech blog.",
+    "",
+    "NOTE on Swiss cantonal police: only St. Gallen publishes a usable RSS feed.",
+    "Zurich, Bern, Aargau, Lucerne, Basel, Solothurn, Thurgau, Zug, Grisons,",
+    "Valais, Geneva, Vaud, Neuchatel and Ticino were all probed and offer none",
+    "(404, or an HTML page). That is a real coverage gap, not a bug — add feeds",
+    "in the console if a corps starts publishing one."
+  ],
+  "feeds": [
+    {
+      "name": "Bundesanwaltschaft / fedpol",
+      "kind": "authority",
+      "lang": "de",
+      "enabled": true,
+      "url": "https://www.newsd.admin.ch/newsd/feeds/rss?lang=de&org-nr=408&topic=&keyword=&offer-nr=&catalogueElement=&kind=&start_date=&end_index=200",
+      "id": "def000"
+    },
+    {
+      "name": "EJPD — Recht & Waffen",
+      "kind": "authority",
+      "lang": "de",
+      "enabled": true,
+      "url": "https://www.newsd.admin.ch/newsd/feeds/rss?lang=de&org-nr=404&topic=&keyword=&offer-nr=&catalogueElement=&kind=&start_date=&end_index=200",
+      "id": "def001"
+    },
+    {
+      "name": "SEM — Migration & Asyl",
+      "kind": "authority",
+      "lang": "de",
+      "enabled": true,
+      "url": "https://www.newsd.admin.ch/newsd/feeds/rss?lang=de&org-nr=405&topic=&keyword=&offer-nr=&catalogueElement=&kind=&start_date=&end_index=200",
+      "id": "def002"
+    },
+    {
+      "name": "Aufsicht Bundeskriminalpolizei",
+      "kind": "authority",
+      "lang": "de",
+      "enabled": true,
+      "url": "https://www.newsd.admin.ch/newsd/feeds/rss?lang=de&org-nr=1091&topic=&keyword=&offer-nr=&catalogueElement=&kind=&start_date=&end_index=200",
+      "id": "def003"
+    },
+    {
+      "name": "VBS / NDB — Sicherheit Schweiz",
+      "kind": "authority",
+      "lang": "de",
+      "enabled": true,
+      "url": "https://www.newsd.admin.ch/newsd/feeds/rss?lang=de&org-nr=1101&topic=&keyword=&offer-nr=&catalogueElement=&kind=&start_date=&end_index=200",
+      "id": "def004"
+    },
+    {
+      "name": "VBS — Bevölkerungsschutz",
+      "kind": "authority",
+      "lang": "de",
+      "enabled": true,
+      "url": "https://www.newsd.admin.ch/newsd/feeds/rss?lang=de&org-nr=1102&topic=&keyword=&offer-nr=&catalogueElement=&kind=&start_date=&end_index=200",
+      "id": "def005"
+    },
+    {
+      "name": "Bund — Digitales & E-ID",
+      "kind": "authority",
+      "lang": "de",
+      "enabled": true,
+      "url": "https://www.newsd.admin.ch/newsd/feeds/rss?lang=de&org-nr=403&topic=&keyword=&offer-nr=&catalogueElement=&kind=&start_date=&end_index=200",
+      "id": "def006"
+    },
+    {
+      "name": "EDA — Aussenbeziehungen",
+      "kind": "authority",
+      "lang": "de",
+      "enabled": true,
+      "url": "https://www.newsd.admin.ch/newsd/feeds/rss?lang=de&org-nr=401&topic=&keyword=&offer-nr=&catalogueElement=&kind=&start_date=&end_index=200",
+      "id": "def007"
+    },
+    {
+      "name": "Bundesrat",
+      "kind": "authority",
+      "lang": "de",
+      "enabled": true,
+      "url": "https://www.newsd.admin.ch/newsd/feeds/rss?lang=de&org-nr=1&topic=&keyword=&offer-nr=&catalogueElement=&kind=&start_date=&end_index=200",
+      "id": "def008"
+    },
+    {
+      "name": "Bund — Glücksspiel & Aufsicht",
+      "kind": "authority",
+      "lang": "de",
+      "enabled": true,
+      "url": "https://www.newsd.admin.ch/newsd/feeds/rss?lang=de&org-nr=413&topic=&keyword=&offer-nr=&catalogueElement=&kind=&start_date=&end_index=200",
+      "id": "def009"
+    },
+    {
+      "name": "Bund — Alarmierung",
+      "kind": "authority",
+      "lang": "de",
+      "enabled": true,
+      "url": "https://www.newsd.admin.ch/newsd/feeds/rss?lang=de&org-nr=1098&topic=&keyword=&offer-nr=&catalogueElement=&kind=&start_date=&end_index=200",
+      "id": "def010"
+    },
+    {
+      "name": "Bund — Rassismus & Beratung",
+      "kind": "authority",
+      "lang": "de",
+      "enabled": true,
+      "url": "https://www.newsd.admin.ch/newsd/feeds/rss?lang=de&org-nr=1093&topic=&keyword=&offer-nr=&catalogueElement=&kind=&start_date=&end_index=200",
+      "id": "def011"
+    },
+    {
+      "name": "Bund — Interdept. Arbeitsgruppen",
+      "kind": "authority",
+      "lang": "de",
+      "enabled": true,
+      "url": "https://www.newsd.admin.ch/newsd/feeds/rss?lang=de&org-nr=1094&topic=&keyword=&offer-nr=&catalogueElement=&kind=&start_date=&end_index=200",
+      "id": "def012"
+    },
+    {
+      "name": "Bund — Schwerpunktaktionen",
+      "kind": "authority",
+      "lang": "de",
+      "enabled": true,
+      "url": "https://www.newsd.admin.ch/newsd/feeds/rss?lang=de&org-nr=324&topic=&keyword=&offer-nr=&catalogueElement=&kind=&start_date=&end_index=200",
+      "id": "def013"
+    },
+    {
+      "name": "BAG — Gesundheit",
+      "kind": "authority",
+      "lang": "de",
+      "enabled": true,
+      "url": "https://www.newsd.admin.ch/newsd/feeds/rss?lang=de&org-nr=317&topic=&keyword=&offer-nr=&catalogueElement=&kind=&start_date=&end_index=200",
+      "id": "def014"
+    },
+    {
+      "name": "Bund — Sozialwerke",
+      "kind": "authority",
+      "lang": "de",
+      "enabled": true,
+      "url": "https://www.newsd.admin.ch/newsd/feeds/rss?lang=de&org-nr=319&topic=&keyword=&offer-nr=&catalogueElement=&kind=&start_date=&end_index=200",
+      "id": "def015"
+    },
+    {
+      "name": "Ministère public / fedpol (FR)",
+      "kind": "authority",
+      "lang": "fr",
+      "enabled": true,
+      "url": "https://www.newsd.admin.ch/newsd/feeds/rss?lang=fr&org-nr=408&topic=&keyword=&offer-nr=&catalogueElement=&kind=&start_date=&end_index=200",
+      "id": "def016"
+    },
+    {
+      "name": "DDPS / SRC — Sécurité (FR)",
+      "kind": "authority",
+      "lang": "fr",
+      "enabled": true,
+      "url": "https://www.newsd.admin.ch/newsd/feeds/rss?lang=fr&org-nr=1101&topic=&keyword=&offer-nr=&catalogueElement=&kind=&start_date=&end_index=200",
+      "id": "def017"
+    },
+    {
+      "name": "Ministero pubblico / fedpol (IT)",
+      "kind": "authority",
+      "lang": "it",
+      "enabled": true,
+      "url": "https://www.newsd.admin.ch/newsd/feeds/rss?lang=it&org-nr=408&topic=&keyword=&offer-nr=&catalogueElement=&kind=&start_date=&end_index=200",
+      "id": "def018"
+    },
+    {
+      "kind": "police",
+      "name": "Kapo St. Gallen — Meldungen",
+      "lang": "de",
+      "enabled": true,
+      "url": "https://www.sg.ch/sicherheit/kantonspolizei/_jcr_content/NewsPar.AtomFeed.qualident__item5.xml",
+      "id": "def019"
+    },
+    {
+      "kind": "police",
+      "name": "Kapo St. Gallen — Aktuell",
+      "lang": "de",
+      "enabled": true,
+      "url": "https://www.sg.ch/sicherheit/kantonspolizei/_jcr_content/NewsPar.RssFeed.qualident__item0.rdf",
+      "id": "def020"
+    },
+    {
+      "kind": "police",
+      "name": "Kapo St. Gallen — Fahndung",
+      "lang": "de",
+      "enabled": true,
+      "url": "https://www.sg.ch/sicherheit/kantonspolizei/_jcr_content/NewsPar.AtomFeed.qualident__item1.xml",
+      "id": "def021"
+    },
+    {
+      "kind": "police",
+      "name": "Kanton Fribourg (inkl. Polizei)",
+      "lang": "fr",
+      "enabled": true,
+      "url": "https://www.fr.ch/rss.xml",
+      "id": "def022"
+    },
+    {
+      "kind": "authority",
+      "name": "Europol",
+      "lang": "en",
+      "enabled": true,
+      "url": "https://www.europol.europa.eu/rss.xml",
+      "id": "def023"
+    },
+    {
+      "kind": "authority",
+      "name": "EU-Kommission",
+      "lang": "en",
+      "enabled": true,
+      "url": "https://ec.europa.eu/commission/presscorner/api/rss?language=en",
+      "id": "def024"
+    },
+    {
+      "kind": "authority",
+      "name": "BMI Österreich",
+      "lang": "de",
+      "enabled": true,
+      "url": "https://www.bmi.gv.at/rss/bmi_presse.xml",
+      "id": "def025"
+    },
+    {
+      "kind": "media",
+      "name": "SRF News",
+      "lang": "de",
+      "enabled": true,
+      "url": "https://www.srf.ch/news/bnf/rss/1646",
+      "id": "def026"
+    },
+    {
+      "kind": "media",
+      "name": "20 Minuten",
+      "lang": "de",
+      "enabled": true,
+      "url": "https://partner-feeds.20min.ch/rss/20minuten",
+      "id": "def027"
+    },
+    {
+      "kind": "media",
+      "name": "NZZ",
+      "lang": "de",
+      "enabled": true,
+      "url": "https://www.nzz.ch/recent.rss",
+      "id": "def028"
+    },
+    {
+      "kind": "media",
+      "name": "Tages-Anzeiger",
+      "lang": "de",
+      "enabled": true,
+      "url": "https://www.tagesanzeiger.ch/rss.html",
+      "id": "def029"
+    },
+    {
+      "kind": "media",
+      "name": "Le Temps",
+      "lang": "fr",
+      "enabled": true,
+      "url": "https://www.letemps.ch/articles.rss",
+      "id": "def030"
+    },
+    {
+      "kind": "media",
+      "name": "Spiegel",
+      "lang": "de",
+      "enabled": true,
+      "url": "https://www.spiegel.de/schlagzeilen/index.rss",
+      "id": "def031"
+    },
+    {
+      "kind": "media",
+      "name": "Zeit Online",
+      "lang": "de",
+      "enabled": true,
+      "url": "https://newsfeed.zeit.de/index",
+      "id": "def032"
+    },
+    {
+      "kind": "media",
+      "name": "FAZ",
+      "lang": "de",
+      "enabled": true,
+      "url": "https://www.faz.net/rss/aktuell/",
+      "id": "def033"
+    },
+    {
+      "kind": "media",
+      "name": "Der Standard",
+      "lang": "de",
+      "enabled": true,
+      "url": "https://www.derstandard.at/rss",
+      "id": "def034"
+    },
+    {
+      "kind": "media",
+      "name": "ORF",
+      "lang": "de",
+      "enabled": true,
+      "url": "https://rss.orf.at/news.xml",
+      "id": "def035"
+    },
+    {
+      "kind": "media",
+      "name": "Tagesschau",
+      "lang": "de",
+      "enabled": true,
+      "url": "https://www.tagesschau.de/xml/rss2/",
+      "id": "def036"
+    },
+    {
+      "kind": "tech",
+      "name": "heise online",
+      "lang": "de",
+      "enabled": true,
+      "url": "https://www.heise.de/rss/heise-atom.xml",
+      "id": "def037"
+    },
+    {
+      "kind": "tech",
+      "name": "Golem",
+      "lang": "de",
+      "enabled": true,
+      "url": "https://rss.golem.de/rss.php?feed=RSS2.0",
+      "id": "def038"
+    },
+    {
+      "kind": "tech",
+      "name": "t3n",
+      "lang": "de",
+      "enabled": true,
+      "url": "https://t3n.de/rss.xml",
+      "id": "def039"
+    },
+    {
+      "kind": "tech",
+      "name": "netzpolitik.org",
+      "lang": "de",
+      "enabled": true,
+      "url": "https://netzpolitik.org/feed/",
+      "id": "def040"
+    },
+    {
+      "kind": "tech",
+      "name": "TechCrunch",
+      "lang": "en",
+      "enabled": true,
+      "url": "https://techcrunch.com/feed/",
+      "id": "def041"
+    },
+    {
+      "kind": "tech",
+      "name": "Ars Technica",
+      "lang": "en",
+      "enabled": true,
+      "url": "https://feeds.arstechnica.com/arstechnica/index",
+      "id": "def042"
+    },
+    {
+      "kind": "tech",
+      "name": "The Verge",
+      "lang": "en",
+      "enabled": true,
+      "url": "https://www.theverge.com/rss/index.xml",
+      "id": "def043"
+    },
+    {
+      "kind": "tech",
+      "name": "Hacker News",
+      "lang": "en",
+      "enabled": true,
+      "url": "https://hnrss.org/frontpage",
+      "id": "def044"
+    },
+    {
+      "kind": "tech",
+      "name": "MIT Technology Review",
+      "lang": "en",
+      "enabled": true,
+      "url": "https://www.technologyreview.com/feed/",
+      "id": "def045"
+    },
+    {
+      "kind": "cyber",
+      "name": "BleepingComputer",
+      "lang": "en",
+      "enabled": true,
+      "url": "https://www.bleepingcomputer.com/feed/",
+      "id": "def046"
+    },
+    {
+      "kind": "cyber",
+      "name": "The Record",
+      "lang": "en",
+      "enabled": true,
+      "url": "https://therecord.media/feed",
+      "id": "def047"
+    },
+    {
+      "kind": "cyber",
+      "name": "Krebs on Security",
+      "lang": "en",
+      "enabled": true,
+      "url": "https://krebsonsecurity.com/feed/",
+      "id": "def048"
+    },
+    {
+      "kind": "cyber",
+      "name": "heise Security",
+      "lang": "de",
+      "enabled": true,
+      "url": "https://www.heise.de/security/rss/news-atom.xml",
+      "id": "def049"
+    },
+    {
+      "kind": "cyber",
+      "name": "Dark Web Informer",
+      "lang": "en",
+      "enabled": true,
+      "url": "https://darkwebinformer.com/rss/",
+      "id": "def050"
+    },
+    {
+      "kind": "cyber",
+      "name": "The Hacker News",
+      "lang": "en",
+      "enabled": true,
+      "url": "https://feeds.feedburner.com/TheHackersNews",
+      "id": "def051"
+    },
+    {
+      "kind": "cyber",
+      "name": "Dark Reading",
+      "lang": "en",
+      "enabled": true,
+      "url": "https://www.darkreading.com/rss.xml",
+      "id": "def052"
+    },
+    {
+      "kind": "cyber",
+      "name": "SecurityWeek",
+      "lang": "en",
+      "enabled": true,
+      "url": "https://feeds.feedburner.com/securityweek",
+      "id": "def053"
+    },
+    {
+      "kind": "cyber",
+      "name": "Schneier on Security",
+      "lang": "en",
+      "enabled": true,
+      "url": "https://www.schneier.com/feed/atom/",
+      "id": "def054"
+    },
+    {
+      "kind": "cyber",
+      "name": "Graham Cluley",
+      "lang": "en",
+      "enabled": true,
+      "url": "https://grahamcluley.com/feed/",
+      "id": "def055"
+    },
+    {
+      "kind": "cyber",
+      "name": "SANS Internet Storm Center",
+      "lang": "en",
+      "enabled": true,
+      "url": "https://isc.sans.edu/rssfeed.xml",
+      "id": "def056"
+    },
+    {
+      "id": "fr01",
+      "name": "tagesschau",
+      "kind": "media",
+      "lang": "de",
+      "enabled": true,
+      "url": "https://www.tagesschau.de/index~rss2.xml"
+    },
+    {
+      "id": "fr02",
+      "name": "Spiegel Panorama",
+      "kind": "media",
+      "lang": "de",
+      "enabled": true,
+      "url": "https://www.spiegel.de/panorama/index.rss"
+    },
+    {
+      "id": "fr05",
+      "name": "Süddeutsche Zeitung",
+      "kind": "media",
+      "lang": "de",
+      "enabled": true,
+      "url": "https://rss.sueddeutsche.de/rss/Topthemen"
+    },
+    {
+      "id": "fr06",
+      "name": "WELT",
+      "kind": "media",
+      "lang": "de",
+      "enabled": true,
+      "url": "https://www.welt.de/feeds/latest.rss"
+    },
+    {
+      "id": "fr08",
+      "name": "n-tv",
+      "kind": "media",
+      "lang": "de",
+      "enabled": true,
+      "url": "https://www.n-tv.de/rss"
+    },
+    {
+      "id": "fr09",
+      "name": "stern",
+      "kind": "media",
+      "lang": "de",
+      "enabled": true,
+      "url": "https://www.stern.de/feed/standard/all/"
+    },
+    {
+      "id": "fr10",
+      "name": "t-online",
+      "kind": "media",
+      "lang": "de",
+      "enabled": true,
+      "url": "https://www.t-online.de/nachrichten/feed.rss"
+    },
+    {
+      "id": "fr11",
+      "name": "Tagesspiegel",
+      "kind": "media",
+      "lang": "de",
+      "enabled": true,
+      "url": "https://www.tagesspiegel.de/contentexport/feed/home"
+    },
+    {
+      "id": "fr12",
+      "name": "RND",
+      "kind": "media",
+      "lang": "de",
+      "enabled": true,
+      "url": "https://www.rnd.de/arc/outboundfeeds/rss/"
+    },
+    {
+      "id": "fr17",
+      "name": "MDR",
+      "kind": "media",
+      "lang": "de",
+      "enabled": true,
+      "url": "https://www.mdr.de/nachrichten/index-rss.xml"
+    },
+    {
+      "id": "fr18",
+      "name": "WDR",
+      "kind": "media",
+      "lang": "de",
+      "enabled": true,
+      "url": "https://www1.wdr.de/uebersicht-100.feed"
+    },
+    {
+      "id": "fr19",
+      "name": "hessenschau",
+      "kind": "media",
+      "lang": "de",
+      "enabled": true,
+      "url": "https://www.hessenschau.de/index.rss"
+    },
+    {
+      "id": "fr20",
+      "name": "Merkur",
+      "kind": "media",
+      "lang": "de",
+      "enabled": true,
+      "url": "https://www.merkur.de/rssfeed.rdf"
+    },
+    {
+      "id": "fr21",
+      "name": "tz",
+      "kind": "media",
+      "lang": "de",
+      "enabled": true,
+      "url": "https://www.tz.de/rssfeed.rdf"
+    },
+    {
+      "id": "fr22",
+      "name": "Frankfurter Rundschau",
+      "kind": "media",
+      "lang": "de",
+      "enabled": true,
+      "url": "https://www.fr.de/rssfeed.rdf"
+    },
+    {
+      "id": "fr23",
+      "name": "BILD",
+      "kind": "media",
+      "lang": "de",
+      "enabled": true,
+      "url": "https://www.bild.de/feed/alles.xml"
+    },
+    {
+      "id": "fr24",
+      "name": "Deutsche Welle",
+      "kind": "media",
+      "lang": "de",
+      "enabled": true,
+      "url": "https://rss.dw.com/rdf/rss-de-all"
+    },
+    {
+      "id": "fr25",
+      "name": "CORRECTIV",
+      "kind": "media",
+      "lang": "de",
+      "enabled": true,
+      "url": "https://correctiv.org/feed/"
+    },
+    {
+      "id": "fr26",
+      "name": "presseportal Polizei (DE)",
+      "kind": "police",
+      "lang": "de",
+      "enabled": true,
+      "url": "https://www.presseportal.de/rss/polizei.rss2"
+    }
+  ]
+}

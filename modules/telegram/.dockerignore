@@ -1,0 +1,10 @@
+session/
+*.session
+*.session-journal
+.env
+.env.local
+.env.example
+test_ui.html
+tests/
+__pycache__/
+*.pyc

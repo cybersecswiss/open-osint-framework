@@ -1,0 +1,67 @@
+{
+  "realm": "osint",
+  "enabled": true,
+  "sslRequired": "external",
+  "registrationAllowed": false,
+  "loginWithEmailAllowed": true,
+  "duplicateEmailsAllowed": false,
+  "resetPasswordAllowed": false,
+  "editUsernameAllowed": false,
+  "bruteForceProtected": true,
+  "failureFactor": 5,
+  "waitIncrementSeconds": 900,
+  "accessTokenLifespan": 900,
+  "ssoSessionIdleTimeout": 1800,
+  "ssoSessionMaxLifespan": 36000,
+  "passwordPolicy": "length(12) and upperCase(1) and lowerCase(1) and digits(1) and specialChars(1) and passwordHistory(10) and forceExpiredPasswordChange(90)",
+  "otpPolicyType": "totp",
+  "otpPolicyAlgorithm": "HmacSHA1",
+  "otpPolicyPeriod": 30,
+  "otpPolicyDigits": 6,
+  "requiredActions": [
+    {
+      "alias": "CONFIGURE_TOTP",
+      "name": "Configure OTP",
+      "providerId": "CONFIGURE_TOTP",
+      "enabled": true,
+      "defaultAction": true,
+      "priority": 10
+    }
+  ],
+  "clients": [
+    {
+      "clientId": "osint-frontend",
+      "enabled": true,
+      "publicClient": true,
+      "standardFlowEnabled": true,
+      "redirectUris": ["*"],
+      "webOrigins": ["+"],
+      "attributes": {
+        "pkce.code.challenge.method": "S256"
+      }
+    },
+    {
+      "clientId": "osint-backend",
+      "enabled": true,
+      "publicClient": false,
+      "serviceAccountsEnabled": true,
+      "secret": "KEYCLOAK_CLIENT_SECRET_PLACEHOLDER",
+      "redirectUris": ["*"],
+      "webOrigins": ["+"]
+    }
+  ],
+  "groups": [
+    {
+      "name": "admin",
+      "attributes": { "role": ["admin"] }
+    }
+  ],
+  "roles": {
+    "realm": [
+      { "name": "platform_admin", "description": "Framework operator. Manages tenants, licenses, agent/IdP URL mapping. NEVER reads tenant data." },
+      { "name": "admin",          "description": "All-in-one mode only — tenant admin. In operator mode tenant admins live in the data server's own Keycloak realm." },
+      { "name": "investigator",   "description": "All-in-one mode only — see admin." },
+      { "name": "reader",         "description": "All-in-one mode only — see admin." }
+    ]
+  }
+}

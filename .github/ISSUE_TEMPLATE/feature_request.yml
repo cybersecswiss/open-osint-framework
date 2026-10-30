@@ -1,0 +1,11 @@
+name: Feature / new source
+description: Propose a feature or a new OSINT source
+labels: [enhancement]
+body:
+  - type: textarea
+    id: what
+    attributes: { label: What and why }
+    validations: { required: true }
+  - type: input
+    id: source
+    attributes: { label: "Source / API (for a new tool)", description: "URL, pricing, terms of service" }

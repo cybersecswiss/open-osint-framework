@@ -1,0 +1,15 @@
+{% if none_text %}
+  <p class="muted">{{ none_text }}</p>
+{% else %}
+<table>
+  <tbody>
+    {% for when, label, who in events %}
+    <tr>
+      <td style="width: 25%; white-space: nowrap;" class="muted">{{ when }}</td>
+      <td>{{ label }}</td>
+      <td style="width: 20%;" class="muted">{{ who }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endif %}

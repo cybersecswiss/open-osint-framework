@@ -1,0 +1,73 @@
+{
+  "title": "Piattaforma OSINT — Manuale utente",
+  "pages": [
+    {
+      "slug": "00-overview",
+      "title": "Panoramica"
+    },
+    {
+      "slug": "01-getting-started",
+      "title": "Primi passi"
+    },
+    {
+      "slug": "02-cases",
+      "title": "Lavorare con i casi"
+    },
+    {
+      "slug": "03-searching",
+      "title": "Eseguire una ricerca"
+    },
+    {
+      "slug": "16-spelling-variants",
+      "title": "Varianti di scrittura"
+    },
+    {
+      "slug": "04-modules-and-tools",
+      "title": "Moduli e strumenti"
+    },
+    {
+      "slug": "15-companies-and-people",
+      "title": "Aziende & persone"
+    },
+    {
+      "slug": "05-telegram",
+      "title": "Telegram (approfondito)"
+    },
+    {
+      "slug": "06-reading-the-graph",
+      "title": "Leggere il grafo"
+    },
+    {
+      "slug": "12-assessing-findings",
+      "title": "Valutare i risultati"
+    },
+    {
+      "slug": "13-tracking-changes",
+      "title": "Seguire le variazioni"
+    },
+    {
+      "slug": "11-ai-function",
+      "title": "La funzione IA"
+    },
+    {
+      "slug": "07-monitoring-and-alerts",
+      "title": "Monitoraggio e avvisi"
+    },
+    {
+      "slug": "08-reports",
+      "title": "Rapporti"
+    },
+    {
+      "slug": "14-exporting",
+      "title": "Esportare un caso"
+    },
+    {
+      "slug": "09-reference",
+      "title": "Riferimento e glossario"
+    },
+    {
+      "slug": "10-support",
+      "title": "Supporto e ticket"
+    }
+  ]
+}

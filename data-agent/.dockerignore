@@ -1,0 +1,41 @@
+# What must never end up inside the data-server image.
+#
+# The Dockerfile does `COPY . .`, so without this file every `docker build`
+# of this directory would bake in
+#
+#   * `.env` — the local POSTGRES_PASSWORD, KC_ADMIN_PASSWORD and the
+#     framework API key,
+#   * `backups/` — database dumps containing case data,
+#   * and, with tarball releases, the PREVIOUS release image (doubling
+#     the image size).
+#
+# Nobody would see it. The image runs correctly either way, the files sit
+# unused next to the code, and the only symptom is that every recipient
+# of the image receives the operator's secrets and somebody else's case data.
+#
+# The image needs `app/`, `main.py` and `requirements.txt`. Everything
+# else in this directory is operator-side tooling.
+
+.env
+.env.*
+!.env.example
+backups/
+agent-image-*.tar.gz
+dist/
+.dist-stage*
+keycloak/import/
+
+# Operator tooling — the customer receives these as downloads from
+# /agent/, not baked into the image they run.
+install.sh
+update.sh
+backup.sh
+docker-compose*.yml
+Caddyfile.template
+version.json
+
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+

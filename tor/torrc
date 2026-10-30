@@ -1,0 +1,8 @@
+# SOCKS proxy reachable from other containers on the internal network.
+SocksPort 0.0.0.0:9050
+# Accept from the docker bridge; the network is not host-exposed.
+SocksPolicy accept 0.0.0.0/0
+DataDirectory /var/lib/tor
+# Client only — never act as a relay/exit.
+ClientOnly 1
+Log notice stdout

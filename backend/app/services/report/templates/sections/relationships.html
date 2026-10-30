@@ -1,0 +1,35 @@
+{% if empty_note %}
+  <p class="muted">{{ empty_note }}</p>
+{% else %}
+  <p class="muted">{{ intro }}</p>
+  {% for group in groups %}
+    <h3>{{ group.header }}</h3>
+    <table>
+      <thead>
+        <tr>
+          <th style="width: 34%;">{{ S.col_from }}</th>
+          <th style="width: 34%;">{{ S.col_to }}</th>
+          <th style="width: 22%;">{{ S.col_source }}</th>
+          <th style="width: 10%; text-align: right;">{{ S.col_confidence }}</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in group.rows %}
+          <tr>
+            <td>{{ r.from }}</td>
+            <td>{{ r.to }}</td>
+            <td class="muted">{{ r.source }}</td>
+            <td style="text-align: right;">
+              {% if r.confidence is not none and r.confidence != 0 %}
+                {{ '%.2f' | format(r.confidence|float) }}
+              {% else %}—{% endif %}
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% if group.truncated %}
+      <p class="muted" style="font-size: 8.5pt;">{{ group.truncated }}</p>
+    {% endif %}
+  {% endfor %}
+{% endif %}

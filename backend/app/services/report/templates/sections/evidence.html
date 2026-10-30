@@ -1,0 +1,34 @@
+{% if empty_note %}
+  <p class="muted">{{ empty_note }}</p>
+{% else %}
+  <p class="muted">{{ intro }}</p>
+  <table>
+    <thead>
+      <tr>
+        <th style="width: 30%;">{{ S.col_label }}</th>
+        <th style="width: 16%;">{{ S.col_source }}</th>
+        <th style="width: 14%;">{{ S.col_observed }}</th>
+        <th style="width: 14%;">{{ S.col_stored }}</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for r in rows %}
+        <tr>
+          <td>
+            {{ r.label }}
+            <span class="muted" style="font-size: 8pt;">({{ r.entity_type }})</span>
+            <div class="muted" style="font-size: 7.5pt; word-break: break-all;">
+              {{ r.url }}
+            </div>
+          </td>
+          <td class="muted">{{ r.source }}</td>
+          <td class="muted" style="font-size: 8pt;">{{ r.observed }}</td>
+          <td class="muted" style="font-size: 8pt;">{{ r.stored }}</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% if no_url %}
+    <p class="muted" style="font-size: 8.5pt;">{{ no_url }}</p>
+  {% endif %}
+{% endif %}

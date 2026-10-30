@@ -1,0 +1,8 @@
+# Sensitive: live Telethon session + local secrets — never commit
+session/
+*.session
+*.session-journal
+.env
+.env.local
+__pycache__/
+*.pyc

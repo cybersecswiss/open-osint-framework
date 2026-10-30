@@ -1,0 +1,130 @@
+{
+  "realm": "__REALM_NAME__",
+  "enabled": true,
+  "sslRequired": "external",
+  "registrationAllowed": false,
+  "loginWithEmailAllowed": true,
+  "duplicateEmailsAllowed": false,
+  "resetPasswordAllowed": true,
+  "editUsernameAllowed": false,
+  "bruteForceProtected": true,
+  "failureFactor": 5,
+  "waitIncrementSeconds": 900,
+  "accessTokenLifespan": 900,
+  "ssoSessionIdleTimeout": 1800,
+  "ssoSessionMaxLifespan": 36000,
+  "passwordPolicy": "length(12) and upperCase(1) and lowerCase(1) and digits(1) and specialChars(1) and passwordHistory(10) and forceExpiredPasswordChange(90)",
+  "otpPolicyType": "totp",
+  "otpPolicyAlgorithm": "HmacSHA1",
+  "otpPolicyPeriod": 30,
+  "otpPolicyDigits": 6,
+  "requiredActions": [
+    {
+      "alias": "CONFIGURE_TOTP",
+      "name": "Configure OTP",
+      "providerId": "CONFIGURE_TOTP",
+      "enabled": true,
+      "defaultAction": true,
+      "priority": 10
+    }
+  ],
+  "clients": [
+    {
+      "clientId": "osint-frontend",
+      "enabled": true,
+      "publicClient": true,
+      "standardFlowEnabled": true,
+      "directAccessGrantsEnabled": false,
+      "redirectUris": ["*"],
+      "webOrigins": ["__FRAMEWORK_FRONTEND_ORIGIN__", "+"],
+      "attributes": {
+        "pkce.code.challenge.method": "S256"
+      },
+      "protocolMappers": [
+        {
+          "name": "groups",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-group-membership-mapper",
+          "consentRequired": false,
+          "config": {
+            "full.path": "false",
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "claim.name": "groups",
+            "userinfo.token.claim": "true"
+          }
+        }
+      ]
+    },
+    {
+      "clientId": "osint-backend",
+      "enabled": true,
+      "publicClient": false,
+      "serviceAccountsEnabled": true,
+      "standardFlowEnabled": true,
+      "secret": "__BACKEND_CLIENT_SECRET__",
+      "redirectUris": ["*"],
+      "webOrigins": ["__FRAMEWORK_FRONTEND_ORIGIN__", "+"],
+      "protocolMappers": [
+        {
+          "name": "groups",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-group-membership-mapper",
+          "consentRequired": false,
+          "config": {
+            "full.path": "false",
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "claim.name": "groups",
+            "userinfo.token.claim": "true"
+          }
+        }
+      ]
+    }
+  ],
+  "roles": {
+    "realm": [
+      { "name": "admin",        "description": "Tenant admin (manage users in this organization)" },
+      { "name": "investigator", "description": "Create cases, run searches, configure monitoring" },
+      { "name": "reader",       "description": "Read-only access" }
+    ]
+  },
+  "groups": [
+    {
+      "name": "__REALM_NAME__",
+      "realmRoles": ["investigator"]
+    }
+  ],
+  "users": [
+    {
+      "username": "__INITIAL_ADMIN_USERNAME__",
+      "email": "__INITIAL_ADMIN_EMAIL__",
+      "enabled": true,
+      "emailVerified": true,
+      "credentials": [
+        {
+          "type": "password",
+          "value": "__INITIAL_ADMIN_PASSWORD__",
+          "temporary": true
+        }
+      ],
+      "realmRoles": ["admin", "investigator"],
+      "groups": ["__REALM_NAME__"]
+    },
+    {
+      "username": "service-account-osint-backend",
+      "enabled": true,
+      "serviceAccountClientId": "osint-backend",
+      "clientRoles": {
+        "realm-management": [
+          "view-users",
+          "manage-users",
+          "query-users",
+          "query-groups",
+          "view-realm",
+          "manage-realm"
+        ]
+      }
+    }
+  ]
+}

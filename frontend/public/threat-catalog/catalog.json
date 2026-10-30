@@ -1,0 +1,256 @@
+{
+  "version": "2026-07-21",
+  "disclaimer": {
+    "de": "Dieser Katalog beschreibt Deliktsfelder aus öffentlichen Lageberichten von Bund und EU. Er bewertet weder Personen noch Organisationen und stellt keine Verdachtslage dar. Jeder Eintrag nennt seine Quelle; die Aussage ist die der Quelle, nicht die des Werkzeugs. Die Suchvorschläge sind Rechercheeinstiege, keine Ermittlungsanlässe.",
+    "en": "This catalogue describes fields of crime taken from public situation reports of the Swiss Confederation and the EU. It assesses neither persons nor organisations and does not constitute suspicion. Every entry names its source; the statement is the source's, not the tool's. The suggested searches are research starting points, not grounds for investigation.",
+    "fr": "Ce catalogue décrit des domaines délictuels tirés de rapports de situation publics de la Confédération et de l'UE. Il n'évalue ni personnes ni organisations et ne constitue pas un soupçon. Chaque entrée cite sa source ; l'affirmation est celle de la source, non de l'outil. Les recherches proposées sont des points de départ, non des motifs d'enquête.",
+    "it": "Questo catalogo descrive ambiti di reato tratti da rapporti di situazione pubblici della Confederazione e dell'UE. Non valuta né persone né organizzazioni e non costituisce sospetto. Ogni voce cita la sua fonte; l'affermazione è della fonte, non dello strumento. Le ricerche proposte sono punti di partenza, non motivi d'indagine."
+  },
+  "categories": [
+    {
+      "key": "ok",
+      "icon": "🕸️",
+      "title": {
+        "de": "Organisierte Kriminalität",
+        "en": "Organised crime",
+        "fr": "Criminalité organisée",
+        "it": "Criminalità organizzata"
+      },
+      "summary": {
+        "de": "fedpol beobachtet eine Zunahme organisierter Strukturen; die Schweiz wird gezielt als Finanz- und Logistikplatz genutzt.",
+        "en": "fedpol observes growing organised structures; Switzerland is deliberately used as a financial and logistics hub.",
+        "fr": "fedpol observe une augmentation des structures organisées ; la Suisse est utilisée comme place financière et logistique.",
+        "it": "fedpol osserva un aumento delle strutture organizzate; la Svizzera è usata come piazza finanziaria e logistica."
+      },
+      "source": {
+        "name": "fedpol, Jahresbericht 2025",
+        "date": "2026-04-16",
+        "url": "https://www.fedpol.admin.ch/de/newnsb/ad5y6KDX83TpMLeMnhUkw"
+      },
+      "topics": [
+        {
+          "title": {
+            "de": "Rockerkriminalität",
+            "en": "Outlaw motorcycle crime",
+            "fr": "Criminalité des groupes de motards",
+            "it": "Criminalità dei gruppi di motociclisti"
+          },
+          "queries": ["Rockerkriminalität", "Motorradclub Kriminalität"],
+          "facets": ["Schweiz"]
+        },
+        {
+          "title": {
+            "de": "Geldwäscherei",
+            "en": "Money laundering",
+            "fr": "Blanchiment d'argent",
+            "it": "Riciclaggio di denaro"
+          },
+          "queries": ["Geldwäscherei", "money laundering"],
+          "facets": ["Schweiz"]
+        },
+        {
+          "title": {
+            "de": "Menschenhandel und Schleusertätigkeit",
+            "en": "Human trafficking and smuggling",
+            "fr": "Traite des êtres humains et passeurs",
+            "it": "Tratta di esseri umani e passatori"
+          },
+          "queries": ["Menschenhandel", "human trafficking"],
+          "facets": ["Schweiz", "Europa"]
+        },
+        {
+          "title": {
+            "de": "Betäubungsmittelhandel",
+            "en": "Drug trafficking",
+            "fr": "Trafic de stupéfiants",
+            "it": "Traffico di stupefacenti"
+          },
+          "queries": ["Drogenhandel", "drug marketplace"],
+          "facets": ["Schweiz", "Europa"]
+        }
+      ]
+    },
+    {
+      "key": "cyber",
+      "icon": "💻",
+      "title": {
+        "de": "Cyberkriminalität",
+        "en": "Cybercrime",
+        "fr": "Cybercriminalité",
+        "it": "Criminalità informatica"
+      },
+      "summary": {
+        "de": "Staatliche und kriminelle Akteure greifen Verwaltung, Betreiber kritischer Infrastruktur und Technologieunternehmen an.",
+        "en": "State and criminal actors target public administration, critical-infrastructure operators and technology firms.",
+        "fr": "Des acteurs étatiques et criminels visent l'administration, les opérateurs d'infrastructures critiques et les entreprises technologiques.",
+        "it": "Attori statali e criminali attaccano l'amministrazione, gli operatori di infrastrutture critiche e le aziende tecnologiche."
+      },
+      "source": {
+        "name": "NDB, Sicherheit Schweiz 2026",
+        "date": "2026-06-25",
+        "url": "https://www.vbs.admin.ch/de/newnsb/jyRmuld1hBVy"
+      },
+      "topics": [
+        {
+          "title": {
+            "de": "Ransomware und Erpressung",
+            "en": "Ransomware and extortion",
+            "fr": "Rançongiciels et extorsion",
+            "it": "Ransomware ed estorsione"
+          },
+          "queries": ["ransomware", "leak site"],
+          "facets": ["Schweiz"]
+        },
+        {
+          "title": {
+            "de": "Handel mit Zugangsdaten",
+            "en": "Trade in stolen credentials",
+            "fr": "Commerce d'identifiants volés",
+            "it": "Commercio di credenziali rubate"
+          },
+          "queries": ["stealer logs", "combolist"],
+          "facets": []
+        },
+        {
+          "title": {
+            "de": "Phishing und Markenmissbrauch",
+            "en": "Phishing and brand abuse",
+            "fr": "Hameçonnage et usurpation de marque",
+            "it": "Phishing e abuso di marchio"
+          },
+          "queries": ["phishing kit"],
+          "facets": ["Schweiz"]
+        }
+      ]
+    },
+    {
+      "key": "extremism",
+      "icon": "⚠️",
+      "title": {
+        "de": "Gewaltextremismus",
+        "en": "Violent extremism",
+        "fr": "Extrémisme violent",
+        "it": "Estremismo violento"
+      },
+      "summary": {
+        "de": "Der NDB nennt gewalttätigen Rechts- und Linksextremismus sowie dschihadistisch motivierte Radikalisierung, verstärkt durch Online-Propaganda.",
+        "en": "The NDB names violent right- and left-wing extremism as well as jihadist-motivated radicalisation, amplified by online propaganda.",
+        "fr": "Le SRC cite l'extrémisme violent de droite et de gauche ainsi que la radicalisation jihadiste, amplifiée par la propagande en ligne.",
+        "it": "Il SIC cita l'estremismo violento di destra e di sinistra e la radicalizzazione jihadista, amplificata dalla propaganda online."
+      },
+      "source": {
+        "name": "NDB, Sicherheit Schweiz 2026",
+        "date": "2026-06-25",
+        "url": "https://www.vbs.admin.ch/de/newnsb/jyRmuld1hBVy"
+      },
+      "topics": [
+        {
+          "title": {
+            "de": "Online-Radikalisierung",
+            "en": "Online radicalisation",
+            "fr": "Radicalisation en ligne",
+            "it": "Radicalizzazione online"
+          },
+          "queries": ["Radikalisierung Telegram"],
+          "facets": ["Schweiz"]
+        },
+        {
+          "title": {
+            "de": "Rechtsextreme Vernetzung",
+            "en": "Right-wing extremist networks",
+            "fr": "Réseaux d'extrême droite",
+            "it": "Reti di estrema destra"
+          },
+          "queries": ["Rechtsextremismus Vernetzung"],
+          "facets": ["Schweiz", "Deutschland"]
+        }
+      ]
+    },
+    {
+      "key": "hybrid",
+      "icon": "🛰️",
+      "title": {
+        "de": "Hybride Bedrohungen und Spionage",
+        "en": "Hybrid threats and espionage",
+        "fr": "Menaces hybrides et espionnage",
+        "it": "Minacce ibride e spionaggio"
+      },
+      "summary": {
+        "de": "Spionagenetzwerke, Desinformationskampagnen und Vorbereitungen für Sabotage an Infrastruktur; die Schweiz ist als Standort internationaler Organisationen exponiert.",
+        "en": "Espionage networks, disinformation campaigns and preparations for infrastructure sabotage; Switzerland is exposed as a host of international organisations.",
+        "fr": "Réseaux d'espionnage, campagnes de désinformation et préparatifs de sabotage ; la Suisse est exposée en tant que siège d'organisations internationales.",
+        "it": "Reti di spionaggio, campagne di disinformazione e preparativi di sabotaggio; la Svizzera è esposta come sede di organizzazioni internazionali."
+      },
+      "source": {
+        "name": "NDB, Sicherheit Schweiz 2026",
+        "date": "2026-06-25",
+        "url": "https://www.vbs.admin.ch/de/newnsb/jyRmuld1hBVy"
+      },
+      "topics": [
+        {
+          "title": {
+            "de": "Desinformationskampagnen",
+            "en": "Disinformation campaigns",
+            "fr": "Campagnes de désinformation",
+            "it": "Campagne di disinformazione"
+          },
+          "queries": ["Desinformation Kampagne"],
+          "facets": ["Schweiz", "Europa"]
+        },
+        {
+          "title": {
+            "de": "Sanktionsumgehung und Proliferation",
+            "en": "Sanctions evasion and proliferation",
+            "fr": "Contournement des sanctions et prolifération",
+            "it": "Elusione delle sanzioni e proliferazione"
+          },
+          "queries": ["Sanktionsumgehung", "dual use export"],
+          "facets": ["Schweiz"]
+        }
+      ]
+    },
+    {
+      "key": "darknet",
+      "icon": "🧅",
+      "title": {
+        "de": "Darknet-Handelsplätze",
+        "en": "Darknet marketplaces",
+        "fr": "Places de marché du darknet",
+        "it": "Mercati del darknet"
+      },
+      "summary": {
+        "de": "Handelsplätze und Foren für Betäubungsmittel, Waffen, Daten und Dienstleistungen. Einstieg über die Darknet-Suche, danach Dienst auslesen.",
+        "en": "Marketplaces and forums for drugs, weapons, data and services. Start with the darknet search, then read the service.",
+        "fr": "Places de marché et forums pour stupéfiants, armes, données et services. Commencer par la recherche darknet, puis analyser le service.",
+        "it": "Mercati e forum per stupefacenti, armi, dati e servizi. Iniziare con la ricerca darknet, poi analizzare il servizio."
+      },
+      "source": {
+        "name": "Europol, IOCTA",
+        "date": "2025",
+        "url": "https://www.europol.europa.eu/publications-events/main-reports"
+      },
+      "topics": [
+        {
+          "title": {
+            "de": "Handelsplätze",
+            "en": "Marketplaces",
+            "fr": "Places de marché",
+            "it": "Mercati"
+          },
+          "queries": ["marketplace", "shop"],
+          "facets": []
+        },
+        {
+          "title": {
+            "de": "Waffenhandel",
+            "en": "Weapons trade",
+            "fr": "Trafic d'armes",
+            "it": "Traffico di armi"
+          },
+          "queries": ["weapons", "Waffenhandel"],
+          "facets": []
+        }
+      ]
+    }
+  ]
+}

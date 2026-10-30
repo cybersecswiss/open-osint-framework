@@ -1,0 +1,20 @@
+<table>
+  <thead>
+    <tr>
+      <th>{{ S.col_when }}</th>
+      <th>{{ S.col_type }}</th>
+      <th>{{ S.col_old }}</th>
+      <th>{{ S.col_new }}</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for r in rows %}
+    <tr>
+      <td class="muted">{{ r.created_at or r.when or '—' }}</td>
+      <td><span class="tag orange">{{ r.change_type or r.type or '—' }}</span></td>
+      <td>{% if r.old_value %}<pre>{{ r.old_value }}</pre>{% else %}—{% endif %}</td>
+      <td>{% if r.new_value %}<pre>{{ r.new_value }}</pre>{% else %}—{% endif %}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>

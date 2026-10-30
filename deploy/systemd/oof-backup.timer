@@ -1,0 +1,13 @@
+# Daily trigger for oof-backup.service. Each run writes a NEW
+# timestamped backup dir; backup.sh prunes ones older than RETENTION_DAYS.
+# See oof-backup.service for install instructions.
+[Unit]
+Description=Run the OOF data backup daily
+
+[Timer]
+OnCalendar=*-*-* 03:30:00
+Persistent=true
+RandomizedDelaySec=600
+
+[Install]
+WantedBy=timers.target

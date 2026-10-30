@@ -1,0 +1,9 @@
+fastapi==0.111.0
+uvicorn[standard]==0.30.1
+pydantic==2.7.4
+httpx[socks]==0.27.0
+beautifulsoup4==4.12.3
+# Real XML parser. html.parser treats <link> as a void element, so RSS
+# <link>https://…</link> loses its text and 13 of 17 hits came back with no
+# URL — a news node an investigator cannot open is useless.
+lxml==6.1.3

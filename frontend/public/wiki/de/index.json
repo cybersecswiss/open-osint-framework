@@ -1,0 +1,73 @@
+{
+  "title": "OSINT-Plattform — Benutzerhandbuch",
+  "pages": [
+    {
+      "slug": "00-overview",
+      "title": "Übersicht"
+    },
+    {
+      "slug": "01-getting-started",
+      "title": "Erste Schritte"
+    },
+    {
+      "slug": "02-cases",
+      "title": "Mit Fällen arbeiten"
+    },
+    {
+      "slug": "03-searching",
+      "title": "Eine Suche durchführen"
+    },
+    {
+      "slug": "16-spelling-variants",
+      "title": "Schreibvarianten"
+    },
+    {
+      "slug": "04-modules-and-tools",
+      "title": "Module & Werkzeuge"
+    },
+    {
+      "slug": "15-companies-and-people",
+      "title": "Firmen & Personen"
+    },
+    {
+      "slug": "05-telegram",
+      "title": "Telegram (tief)"
+    },
+    {
+      "slug": "06-reading-the-graph",
+      "title": "Den Graphen lesen"
+    },
+    {
+      "slug": "12-assessing-findings",
+      "title": "Funde bewerten"
+    },
+    {
+      "slug": "13-tracking-changes",
+      "title": "Veränderungen verfolgen"
+    },
+    {
+      "slug": "11-ai-function",
+      "title": "Die KI-Funktion"
+    },
+    {
+      "slug": "07-monitoring-and-alerts",
+      "title": "Überwachung & Alarme"
+    },
+    {
+      "slug": "08-reports",
+      "title": "Berichte"
+    },
+    {
+      "slug": "14-exporting",
+      "title": "Fall exportieren"
+    },
+    {
+      "slug": "09-reference",
+      "title": "Referenz & Glossar"
+    },
+    {
+      "slug": "10-support",
+      "title": "Support & Tickets"
+    }
+  ]
+}

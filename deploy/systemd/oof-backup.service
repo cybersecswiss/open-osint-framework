@@ -1,0 +1,35 @@
+# Versioned data backup (postgres dump + named volumes) via scripts/backup.sh.
+# OPT-IN — not installed automatically. Install on a persistent host with:
+#
+#   # BACKUP_ROOT must exist and belong to User= below. systemd runs this
+#   # without a TTY, so backup.sh's interactive `sudo mkdir` fallback cannot
+#   # work — without this step every timer run fails.
+#   sudo mkdir -p /var/backups/oof
+#   (as User=root nothing to chown; use another user in the docker group if you prefer)
+#
+#   sudo cp deploy/systemd/oof-backup.* /etc/systemd/system/
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable --now oof-backup.timer
+#   sudo systemctl start oof-backup.service     # run once now
+#   systemctl list-timers oof-backup.timer      # verify next run
+#   journalctl -u oof-backup.service -n 20      # verify it succeeded
+#
+# User= must be in the `docker` group (backup.sh talks to the daemon).
+# Adjust User=, WorkingDirectory= and BACKUP_ROOT/RETENTION_DAYS to taste.
+#
+# NOTE: this writes to /var/backups/oof, which is also
+# restore.sh's default BACKUP_ROOT — so `bash scripts/restore.sh latest`
+# picks up timer backups with no extra arguments. Backups taken by hand
+# into ./backups/full need the path passed explicitly.
+[Unit]
+Description=OOF versioned data backup
+After=docker.service
+Requires=docker.service
+
+[Service]
+Type=oneshot
+User=root
+WorkingDirectory=/opt/oof
+Environment=BACKUP_ROOT=/var/backups/oof
+Environment=RETENTION_DAYS=30
+ExecStart=/bin/bash /opt/oof/scripts/run-scheduled.sh backup /bin/bash /opt/oof/scripts/backup.sh

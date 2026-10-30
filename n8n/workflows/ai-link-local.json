@@ -1,0 +1,71 @@
+{
+  "id": "AiLinkLocal00001",
+  "name": "AI Case Linking (local model)",
+  "meta": {
+    "description": "SOVEREIGN variant of ai-link — sends the case graph to a LOCAL OpenAI-compatible model (Ollama/vLLM/llama.cpp) instead of Gemini, so NO case data leaves the customer. Activate this workflow and set AI_PROVIDER=local + AI_LOCAL_BASE_URL in the framework .env. The backend posts { entities, edges, local_base_url, local_model } to the webhook 'ai-link-local'. Edit the prompt in 'Build Prompt'. Skeleton — finalise the model/endpoint in the UI when a local model exists."
+  },
+  "nodes": [
+    {
+      "id": "webhook",
+      "name": "AI-Link Local Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [240, 300],
+      "webhookId": "ai-link-local",
+      "parameters": { "path": "ai-link-local", "httpMethod": "POST", "responseMode": "responseNode" }
+    },
+    {
+      "id": "build_prompt",
+      "name": "Build Prompt",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [480, 300],
+      "parameters": {
+        "language": "javaScript",
+        "jsCode": "// ── EDIT THE PROMPT HERE ──────────────────────────────────────────\n// Same task as the Gemini workflow, but produces an OpenAI chat body for\n// a LOCAL model. entities/edges are already credential-sanitised backend-side.\nconst body = $json.body || $json;\nconst entities = (body.entities || []).map(e => ({ id: e.id, type: e.entity_type, label: e.label, data: e.data }));\nconst edges = (body.edges || []).map(e => ({ from: e.from_entity, to: e.to_entity, relation: e.relation_type }));\n\nconst SYSTEM = `You are an OSINT analyst assistant for a law-enforcement case tool.\nGiven a case graph (entities + edges), do THREE things, grounded ONLY in the provided data:\n1) identity_clusters: which entities most likely belong to the SAME real person/actor, with rationale and 0-1 confidence;\n2) suggested_edges: plausible NEW relationships between EXISTING entities (never invent entities), each with relation, rationale, confidence;\n3) narrative + next_steps.\nNever fabricate. Respond ONLY as JSON:\n{\"identity_clusters\":[{\"entity_ids\":[],\"rationale\":\"\",\"confidence\":0}],\"suggested_edges\":[{\"from_id\":\"\",\"to_id\":\"\",\"relation\":\"\",\"rationale\":\"\",\"confidence\":0}],\"narrative\":\"\",\"next_steps\":[]}`;\n\nconst user = `ENTITIES:\\n` + JSON.stringify(entities, null, 1) + `\\n\\nEDGES:\\n` + JSON.stringify(edges, null, 1);\n\nconst openai_body = {\n  model: body.local_model || \"llama3.1\",\n  messages: [ { role: \"system\", content: SYSTEM }, { role: \"user\", content: user } ],\n  temperature: 0.2,\n  response_format: { type: \"json_object\" }\n};\n\nreturn [{ json: {\n  case_id: body.case_id || null,\n  base_url: (body.local_base_url || \"\").replace(/\\/$/, \"\"),\n  openai_body\n} }];"
+      }
+    },
+    {
+      "id": "local_llm",
+      "name": "Local LLM",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [720, 300],
+      "parameters": {
+        "method": "POST",
+        "url": "={{$json.base_url}}/v1/chat/completions",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.openai_body) }}",
+        "options": {}
+      }
+    },
+    {
+      "id": "extract",
+      "name": "Extract JSON",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [960, 300],
+      "parameters": {
+        "language": "javaScript",
+        "jsCode": "// OpenAI-compatible: choices[0].message.content = the JSON string.\nconst r = $json;\nlet text = '';\ntry { text = r.choices[0].message.content; } catch (e) { text = ''; }\nlet parsed = {};\ntry { parsed = JSON.parse(text); } catch (e) { parsed = { error: 'model did not return valid JSON', raw: text }; }\nreturn [{ json: parsed }];"
+      }
+    },
+    {
+      "id": "respond",
+      "name": "Respond",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [1200, 300],
+      "parameters": { "respondWith": "json", "responseBody": "={{ JSON.stringify($json) }}" }
+    }
+  ],
+  "connections": {
+    "AI-Link Local Webhook": { "main": [[{ "node": "Build Prompt", "type": "main", "index": 0 }]] },
+    "Build Prompt":          { "main": [[{ "node": "Local LLM", "type": "main", "index": 0 }]] },
+    "Local LLM":             { "main": [[{ "node": "Extract JSON", "type": "main", "index": 0 }]] },
+    "Extract JSON":          { "main": [[{ "node": "Respond", "type": "main", "index": 0 }]] }
+  },
+  "settings": {},
+  "active": false
+}

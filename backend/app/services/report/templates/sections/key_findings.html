@@ -1,0 +1,34 @@
+{% if empty_note %}
+  <p class="muted">{{ empty_note }}</p>
+{% else %}
+  <p class="muted">{{ intro }}</p>
+  <table>
+    <thead>
+      <tr>
+        <th style="width: 6%; text-align: right;">{{ S.col_score }}</th>
+        <th style="width: 46%;">{{ S.col_finding }}</th>
+        <th style="width: 12%;">{{ S.col_rating }}</th>
+        <th style="width: 36%;">{{ S.col_confirmed }}</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for r in rows %}
+        <tr>
+          <td style="text-align: right;" class="muted">{{ r.position }}</td>
+          <td>
+            {{ r.label }}
+            <span class="muted" style="font-size: 8pt;">({{ r.entity_type }})</span>
+            {% if r.url %}
+              <div class="muted" style="font-size: 7.5pt; word-break: break-all;">
+                {{ r.url }}
+              </div>
+            {% endif %}
+          </td>
+          <td><span class="tag {% if r.corroborated %}green{% endif %}">{{ r.admiralty }}</span></td>
+          <td class="muted" style="font-size: 8.5pt;">{{ r.confirmed }}</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  <p class="muted" style="font-size: 8pt;">{{ footnote }}</p>
+{% endif %}

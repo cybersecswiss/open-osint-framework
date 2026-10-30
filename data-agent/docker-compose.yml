@@ -1,0 +1,103 @@
+# =============================================================
+# Data-server compose. Runs on the organisation's own server.
+# Self-contained: own Postgres, own bridge network.
+#
+# Includes a Keycloak instance — the organisation's users live here,
+# the framework operator has no admin access. The framework backend
+# only consumes the IdP's public JWKS to verify tokens.
+# =============================================================
+
+networks:
+  agent_net:
+    driver: bridge
+
+volumes:
+  agent_postgres_data:
+  agent_keycloak_data:
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: agent
+      POSTGRES_USER: agent
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      # Used by postgres-init.sh to bootstrap the keycloak DB on first start.
+      POSTGRES_KEYCLOAK_PASSWORD: ${POSTGRES_KEYCLOAK_PASSWORD}
+    volumes:
+      - agent_postgres_data:/var/lib/postgresql/data
+      - ./postgres-init.sh:/docker-entrypoint-initdb.d/init-keycloak-db.sh:ro
+    networks:
+      - agent_net
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U agent"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  agent:
+    build: .
+    image: oof/data-agent:latest
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+      FRAMEWORK_KEY: ${FRAMEWORK_KEY}
+    ports:
+      - "${AGENT_PORT:-9000}:9000"
+    networks:
+      - agent_net
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:9000/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  # ── Keycloak ───────────────────────────────────────────────────
+  # Data-server-side Identity Provider. Realm name = tenant name.
+  # On first start, imports realm.json that install.sh wrote from
+  # realm-template.json. Subsequent restarts skip import (Keycloak
+  # remembers via the `imported` flag in its DB).
+  keycloak:
+    image: quay.io/keycloak/keycloak:24.0
+    command: start --import-realm --http-relative-path=/auth
+    environment:
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://postgres:5432/keycloak
+      KC_DB_USERNAME: keycloak
+      KC_DB_PASSWORD: ${POSTGRES_KEYCLOAK_PASSWORD}
+      KC_HOSTNAME: ${KC_HOSTNAME:-localhost}
+      KC_HOSTNAME_PORT: ${KC_HOSTNAME_PORT:-9080}
+      KC_HOSTNAME_STRICT: "false"
+      KC_HOSTNAME_STRICT_HTTPS: "false"
+      KC_HTTP_ENABLED: "true"
+      KC_PROXY: edge
+      KEYCLOAK_ADMIN: ${KC_ADMIN_USER:-admin}
+      KEYCLOAK_ADMIN_PASSWORD: ${KC_ADMIN_PASSWORD}
+      # Single-node deployment — disable Infinispan clustering. In an
+      # all-in-one install this prevents the data-server Keycloak from
+      # auto-discovering the framework Keycloak on the shared docker bridge
+      # and clustering with it (which breaks realm routing). In operator
+      # mode this Keycloak runs alone on its server, so this is also correct.
+      KC_CACHE: local
+    volumes:
+      - agent_keycloak_data:/opt/keycloak/data
+      - ./keycloak/import:/opt/keycloak/data/import:ro
+    ports:
+      - "${KC_PORT:-9080}:8080"
+    networks:
+      - agent_net
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "exec 3<>/dev/tcp/127.0.0.1/8080; echo -e 'GET /auth/realms/master HTTP/1.0\\r\\n\\r\\n' >&3; head -1 <&3 | grep -qE '200|302'"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 60s
