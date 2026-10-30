@@ -1,0 +1,62 @@
+# Known crime / cybercrime Telegram channels swept during a
+# username / alias search (tool: telegram_username_hunt).
+#
+# One public channel handle per line. '@' optional; t.me/<name> and full
+# URLs are also accepted. '#' starts a comment. Re-read on EVERY search
+# (bind-mounted) — edits take effect with no rebuild/restart.
+#
+# ACTIVE list = what gets swept, capped at TELEGRAM_HUNT_MAX_CHANNELS
+# (default 40). The full deepdarkCTI pool (~950 channels across
+# infostealer / threat-actor / ransomware / market / forum categories)
+# is in crime_channels.reference.txt — copy the ones you want here.
+#
+# Curate for your jurisdiction & caseload. Many stealer-log channels are
+# invite-only: keyless mode can't read them (skipped cleanly); the
+# Telethon deep path reads any channel the collection account has joined.
+#
+# Source of the seed handles: deepdarkCTI (github.com/fastfire/deepdarkCTI),
+# telegram_infostealer.md — public CTI, community-maintained. Verify /
+# refresh periodically; threat-actor channels churn fast.
+#
+# --- default active set: infostealer / logs channels ---
+# (prime targets — usernames & credentials surface in stealer-log dumps)
+anonymous_algeria_chat
+anuriacloud
+arenacloudfree
+atm_logs
+banklogplug2
+berserklogs
+bhf_cloud
+borwitafreelogs
+bradmax_cloud
+burncloudlogs
+cbanke_logs
+chatcloudcasper
+chrono_logs
+cloudcasperlink
+clouddvd
+cloudleaksbr
+cloudlogs
+cloudlogsprivate
+cloudmika
+cloudxlog
+creditunionbanksstore
+cvv190_cloud
+darknescloud
+darkside_hubb
+darksidecloud
+database_leak
+dataleaks24
+developer_astra
+dnftm_cloud
+dragoncloud1
+eliteband
+enigmalogs
+europecloud
+fatecloud
+fehucloud
+free_logs_cloud_arthouse
+frilogs
+gameslogscloud
+ganjacloud
+godeless_cloud

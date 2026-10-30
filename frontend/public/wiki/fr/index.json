@@ -1,0 +1,73 @@
+{
+  "title": "Plateforme OSINT — Manuel d'utilisation",
+  "pages": [
+    {
+      "slug": "00-overview",
+      "title": "Vue d'ensemble"
+    },
+    {
+      "slug": "01-getting-started",
+      "title": "Premiers pas"
+    },
+    {
+      "slug": "02-cases",
+      "title": "Travailler avec les dossiers"
+    },
+    {
+      "slug": "03-searching",
+      "title": "Lancer une recherche"
+    },
+    {
+      "slug": "16-spelling-variants",
+      "title": "Variantes d'écriture"
+    },
+    {
+      "slug": "04-modules-and-tools",
+      "title": "Modules & outils"
+    },
+    {
+      "slug": "15-companies-and-people",
+      "title": "Entreprises & personnes"
+    },
+    {
+      "slug": "05-telegram",
+      "title": "Telegram (approfondi)"
+    },
+    {
+      "slug": "06-reading-the-graph",
+      "title": "Lire le graphe"
+    },
+    {
+      "slug": "12-assessing-findings",
+      "title": "Évaluer les résultats"
+    },
+    {
+      "slug": "13-tracking-changes",
+      "title": "Suivre les changements"
+    },
+    {
+      "slug": "11-ai-function",
+      "title": "La fonction IA"
+    },
+    {
+      "slug": "07-monitoring-and-alerts",
+      "title": "Surveillance & alertes"
+    },
+    {
+      "slug": "08-reports",
+      "title": "Rapports"
+    },
+    {
+      "slug": "14-exporting",
+      "title": "Exporter un dossier"
+    },
+    {
+      "slug": "09-reference",
+      "title": "Référence & glossaire"
+    },
+    {
+      "slug": "10-support",
+      "title": "Support & tickets"
+    }
+  ]
+}

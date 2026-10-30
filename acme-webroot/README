@@ -1,0 +1,2 @@
+# ACME webroot for Let's Encrypt (certbot --webroot -w ./acme-webroot).
+# nginx serves this at /.well-known/acme-challenge/ on port 80.

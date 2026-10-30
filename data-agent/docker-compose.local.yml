@@ -1,0 +1,27 @@
+# =============================================================
+# All-in-one overlay: the data server runs on the SAME host as the
+# framework and joins its internal docker network. Used by
+#   sudo ./setup.sh --mode allinone
+#
+#   docker compose -f docker-compose.yml -f docker-compose.local.yml up -d postgres agent
+#
+# - no host port for the agent (the framework reaches it via Docker DNS
+#   as http://data-agent-local:9000 — traffic never leaves the host)
+# - the customer Keycloak is NOT started: in this mode users log in
+#   through the framework's own Keycloak (realm `osint`)
+# =============================================================
+name: oof-agent
+
+networks:
+  framework_net:
+    name: oof_internal
+    external: true
+
+services:
+  agent:
+    ports: !reset []
+    networks:
+      agent_net: {}
+      framework_net:
+        aliases:
+          - data-agent-local

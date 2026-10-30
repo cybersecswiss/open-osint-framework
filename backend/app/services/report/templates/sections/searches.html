@@ -1,0 +1,31 @@
+{% if none_text %}
+  <p class="muted">{{ none_text }}</p>
+{% else %}
+<table>
+  <thead>
+    <tr>
+      <th>{{ S.col_when }}</th>
+      <th>{{ S.col_query }}</th>
+      <th>{{ S.col_type }}</th>
+      <th>{{ S.col_modules }}</th>
+      <th>{{ S.col_status }}</th>
+      <th>{{ S.col_by }}</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for r in rows %}
+    <tr>
+      <td class="muted">{{ r.when }}</td>
+      <td>{{ r.query }}</td>
+      <td><span class="tag">{{ r.query_type }}</span></td>
+      <td class="muted">{{ r.modules }}</td>
+      <td>
+        {% set cls = 'green' if r.status == 'completed' else ('orange' if r.status == 'partial' else ('red' if r.status == 'failed' else 'blue')) %}
+        <span class="tag {{ cls }}">{{ r.status }}</span>
+      </td>
+      <td class="muted">{{ r.by }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endif %}

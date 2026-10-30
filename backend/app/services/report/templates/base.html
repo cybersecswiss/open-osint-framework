@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="{{ lang }}">
+<head>
+<meta charset="utf-8">
+<title>{{ case.case_number }} — {{ case.title }}</title>
+<style>
+  @page {
+    size: A4;
+    margin: 22mm 18mm 24mm 18mm;
+    @top-left {
+      content: "{{ tenant_settings.display_name or '' }}{% if only_relevant %} · {{ S.only_relevant }}{% endif %}";
+      font: 9pt 'DejaVu Sans', sans-serif;
+      color: #888;
+    }
+    @top-right {
+      content: "{{ case.case_number }}";
+      font: 9pt 'DejaVu Sans', sans-serif;
+      color: #888;
+    }
+    @bottom-center {
+      content: counter(page) " / " counter(pages);
+      font: 9pt 'DejaVu Sans', sans-serif;
+      color: #888;
+    }
+    {% if tenant_settings.report_classification %}
+    /* The authority's classification marking on EVERY page, cover included
+       (set in Admin -> Settings; validated to contain no quotes). */
+    @top-center {
+      content: "{{ tenant_settings.report_classification }}";
+      font: bold 9pt 'DejaVu Sans', sans-serif;
+      color: #cf1322;
+    }
+    @bottom-left {
+      content: "{{ tenant_settings.report_classification }}";
+      font: bold 8pt 'DejaVu Sans', sans-serif;
+      color: #cf1322;
+    }
+    {% endif %}
+  }
+  /* Suppress header/footer on the cover page so it looks like a cover. */
+  @page :first {
+    @top-left { content: ""; }
+    @top-right { content: ""; }
+  }
+
+  body {
+    font-family: 'DejaVu Sans', sans-serif;
+    font-size: 10pt;
+    color: #222;
+    line-height: 1.4;
+  }
+  h1 { font-size: 18pt; margin: 0 0 8pt 0; color: #1677ff; }
+  h2 { font-size: 13pt; margin: 18pt 0 6pt 0; padding-bottom: 4pt;
+       border-bottom: 1px solid #d9d9d9; }
+  h3 { font-size: 11pt; margin: 12pt 0 4pt 0; }
+  p { margin: 4pt 0; }
+  table { width: 100%; border-collapse: collapse; margin: 6pt 0; }
+  th, td { padding: 4pt 6pt; text-align: left; border-bottom: 1px solid #f0f0f0;
+           font-size: 9pt; vertical-align: top; }
+  th { background: #fafafa; color: #595959; font-weight: 600; }
+  .muted { color: #8c8c8c; }
+  .tag { display: inline-block; padding: 1pt 6pt; border-radius: 3px;
+         font-size: 8.5pt; background: #f0f0f0; color: #595959; }
+  .tag.green { background: #f6ffed; color: #389e0d; }
+  .tag.orange { background: #fff7e6; color: #d46b08; }
+  .tag.red { background: #fff1f0; color: #cf1322; }
+  .tag.blue { background: #e6f4ff; color: #0958d9; }
+  .section { page-break-before: always; }
+  .section:first-of-type { page-break-before: auto; }
+  pre { background: #fafafa; padding: 6pt; font-size: 8.5pt; white-space: pre-wrap;
+        word-wrap: break-word; border-left: 2px solid #d9d9d9; }
+</style>
+</head>
+<body>
+  {% for section in sections %}
+    <div class="section">
+      <h2>{{ section.title }}</h2>
+      {{ section.html | safe }}
+    </div>
+  {% endfor %}
+
+  {#
+    Colophon. Two things were wrong with this block and both reached every
+    PDF the product has ever produced:
+
+    * it carried `page-break-before: always` plus an `<h2>—</h2>`, so every
+      report ended on an extra sheet holding one em dash and one grey line;
+    * the text was hardcoded English in a report that ships in four
+      languages, directly under a fully translated document.
+
+    It is now a quiet rule-off line at the end of the last real section.
+  #}
+  <p class="muted" style="font-size: 8pt; margin-top: 14pt;
+            border-top: 1px solid #f0f0f0; padding-top: 6pt;">
+    {{ S.generated }} {{ generated_at }} {{ S.by }} {{ generated_by }}
+    &middot;
+    {{ S.case }} {{ case.case_number }}
+    {%- if tenant_settings.display_name %}
+      &middot; {{ tenant_settings.display_name }}
+    {%- endif %}
+  </p>
+</body>
+</html>

@@ -1,0 +1,8 @@
+# Build context hygiene. Same class of problem as data-agent/.dockerignore,
+# smaller blast radius: no secrets live in this directory (the .env is at
+# the project root, outside the context), but caches and test artefacts
+# have no business in a shipped image and they invalidate layers.
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/

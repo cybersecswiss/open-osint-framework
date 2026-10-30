@@ -1,0 +1,140 @@
+{
+  "id": "AiLinkGemini0001",
+  "name": "AI Case Linking",
+  "meta": {
+    "description": "Grundger\u00fcst f\u00fcr die AI-Funktion. Das Backend (POST /api/v1/cases/{id}/ai-link) sanitisiert den Fall-Graphen und POSTet ihn an den Webhook 'ai-link'. Der Prompt im Node 'Build Prompt' ist frei editierbar. Der Gemini-Node ist eine Vorlage \u2014 Modell/Credential in der UI final setzen. Sp\u00e4ter ein zweiter Zweig f\u00fcr lokale KI (Ollama/vLLM) f\u00fcr die souver\u00e4ne Variante."
+  },
+  "nodes": [
+    {
+      "id": "webhook",
+      "name": "AI-Link Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        240,
+        300
+      ],
+      "webhookId": "ai-link",
+      "parameters": {
+        "path": "ai-link",
+        "httpMethod": "POST",
+        "responseMode": "responseNode"
+      }
+    },
+    {
+      "id": "build_prompt",
+      "name": "Build Prompt",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        480,
+        300
+      ],
+      "parameters": {
+        "language": "javaScript",
+        "jsCode": "// \u2500\u2500 EDIT THE PROMPT HERE \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n// The backend posts { case_id, entities, edges, gemini_key, model }.\n// entities/edges are already credential-sanitised backend-side.\nconst body = $json.body || $json;\nconst entities = (body.entities || []).map(e => ({ id: e.id, type: e.entity_type, label: e.label, data: e.data }));\nconst edges = (body.edges || []).map(e => ({ from: e.from_entity, to: e.to_entity, relation: e.relation_type }));\n\nconst SYSTEM = `You are an OSINT analyst assistant for a law-enforcement case tool.\nGiven a case graph (entities + edges), do THREE things, grounded ONLY in the provided data:\n1) identity_clusters: which entities most likely belong to the SAME real person/actor, with a short rationale and a 0-1 confidence;\n2) suggested_edges: plausible NEW relationships between EXISTING entities (never invent entities), each with relation, rationale, confidence;\n3) narrative: a concise attribution summary + next_steps (which selectors are worth pursuing).\nNever fabricate. If evidence is weak, say so. Respond ONLY as JSON:\n{\"identity_clusters\":[{\"entity_ids\":[],\"rationale\":\"\",\"confidence\":0}],\"suggested_edges\":[{\"from_id\":\"\",\"to_id\":\"\",\"relation\":\"\",\"rationale\":\"\",\"confidence\":0}],\"narrative\":\"\",\"next_steps\":[]}`;\n\nconst prompt = SYSTEM + `\\n\\nENTITIES:\\n` + JSON.stringify(entities, null, 1) + `\\n\\nEDGES:\\n` + JSON.stringify(edges, null, 1);\n\nconst geminiBody = {\n  contents: [{ parts: [{ text: prompt }] }],\n  generationConfig: { responseMimeType: \"application/json\", temperature: 0.2 }\n};\n\nreturn [{ json: {\n  case_id: body.case_id || null,\n  model: body.model || \"gemini-2.0-flash\",\n  gemini_key: body.gemini_key || \"\",\n  gemini_body: geminiBody\n} }];"
+      }
+    },
+    {
+      "id": "gemini",
+      "name": "Gemini",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        720,
+        300
+      ],
+      "onError": "continueRegularOutput",
+      "parameters": {
+        "method": "POST",
+        "url": "=https://generativelanguage.googleapis.com/v1beta/models/{{$json.model}}:generateContent?key={{$json.gemini_key}}",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.gemini_body) }}",
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "extract",
+      "name": "Extract JSON",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        960,
+        300
+      ],
+      "parameters": {
+        "language": "javaScript",
+        "jsCode": "// Gemini returns candidates[0].content.parts[0].text = the JSON string.\n// On an API error (quota/404/\u2026) it returns { error: {...} } \u2014 surface it.\nconst r = $json;\nif (r && r.error) {\n  return [{ json: { error: 'Gemini: ' + (r.error.message || JSON.stringify(r.error)), code: r.error.code } }];\n}\nlet text = '';\ntry { text = r.candidates[0].content.parts[0].text; } catch (e) { text = ''; }\nlet parsed = {};\ntry { parsed = JSON.parse(text); } catch (e) { parsed = { error: 'model did not return valid JSON', raw: text }; }\n// Pass through the exact token usage so the platform can account it.\nconst u = r.usageMetadata || {};\nparsed._usage = { prompt: u.promptTokenCount || 0, output: u.candidatesTokenCount || 0, total: u.totalTokenCount || 0 };\nreturn [{ json: parsed }];"
+      }
+    },
+    {
+      "id": "respond",
+      "name": "Respond",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        1200,
+        300
+      ],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify($json) }}"
+      }
+    }
+  ],
+  "connections": {
+    "AI-Link Webhook": {
+      "main": [
+        [
+          {
+            "node": "Build Prompt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Prompt": {
+      "main": [
+        [
+          {
+            "node": "Gemini",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gemini": {
+      "main": [
+        [
+          {
+            "node": "Extract JSON",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract JSON": {
+      "main": [
+        [
+          {
+            "node": "Respond",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {},
+  "active": false
+}
