@@ -1,0 +1,32 @@
+fastapi==0.111.0
+uvicorn[standard]==0.30.0
+sqlalchemy[asyncio]==2.0.30
+asyncpg==0.29.0
+alembic==1.13.1
+httpx==0.27.0
+python-jose[cryptography]==3.3.0
+cryptography>=42.0
+pydantic-settings==2.2.1
+redis==5.0.4
+websockets==12.0
+python-multipart==0.0.9
+email-validator==2.1.1
+# Calendar-accurate month arithmetic for the auto-delete frist
+# (relativedelta) — 30-day approximations drift over a legally
+# relevant retention period.
+python-dateutil==2.9.0.post0
+# PDF report generation. WeasyPrint dlopens pango/
+# cairo/gdk-pixbuf at runtime; the Dockerfile installs the matching
+# .so files. Jinja2 renders the modular section templates.
+# pydyf MUST be pinned to a version compatible with WeasyPrint —
+# pydyf >=0.11 broke the API ('super' object has no attribute 'transform')
+# for WeasyPrint 62.x. Keep them coordinated when bumping.
+weasyprint==62.3
+pydyf==0.10.0
+jinja2==3.1.4
+# Report as Word (services/report/docx_export.py). Image
+# handling is overridden there: htmldocx would fetch http images itself.
+htmldocx==0.0.6
+python-docx==1.2.0
+beautifulsoup4==4.15.0
+

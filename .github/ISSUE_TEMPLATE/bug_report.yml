@@ -1,0 +1,32 @@
+name: Bug report
+description: Something does not work as documented
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        **Security problem?** Do not file it here — see SECURITY.md.
+        Never paste `.env`, credentials or case data.
+  - type: input
+    id: version
+    attributes: { label: Version, description: "content of the VERSION file" }
+    validations: { required: true }
+  - type: dropdown
+    id: mode
+    attributes:
+      label: Installation type
+      options: [allinone, operator, customer data server]
+    validations: { required: true }
+  - type: textarea
+    id: what
+    attributes: { label: What happened, description: "and what you expected instead" }
+    validations: { required: true }
+  - type: textarea
+    id: repro
+    attributes: { label: Steps to reproduce }
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs
+      description: "e.g. `bash scripts/health-check.sh`, `docker compose logs --tail 100 api` — remove secrets and personal data"
+      render: text

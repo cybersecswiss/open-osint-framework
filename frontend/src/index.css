@@ -1,0 +1,62 @@
+/*
+ * The few global rules that cannot live in a component.
+ *
+ * Everything else is AntD tokens (see App.tsx); this file exists for the two
+ * things a component-scoped style cannot express: a link that must be the
+ * first focusable element on the page, and a focus ring that survives AntD's
+ * reset.
+ */
+
+/* ── Skip link (WCAG 2.1 SC 2.4.1 "Bypass Blocks") ──────────────────
+   A keyboard user otherwise tabs through the entire sidebar on every
+   navigation before reaching the content. Off-screen until focused, then
+   it lands over the header where it is unmissable. NOT display:none —
+   that would take it out of the tab order, which is the whole point. */
+.skip-link {
+  position: absolute;
+  left: -9999px;
+  top: 0;
+  z-index: 2000;
+  padding: 10px 16px;
+  background: #1677ff;
+  color: #fff;
+  border-radius: 0 0 6px 0;
+  font-weight: 600;
+  text-decoration: none;
+}
+.skip-link:focus,
+.skip-link:focus-visible {
+  left: 0;
+  outline: 3px solid #fff;
+  outline-offset: -3px;
+}
+
+/* The content region receives focus from the skip link. It is programmatic
+   focus only (tabIndex -1), so the browser's default ring would appear on a
+   mouse click too — hence :focus-visible, not :focus. */
+#main-content:focus-visible {
+  outline: 2px solid #1677ff;
+  outline-offset: 2px;
+}
+
+/* Respect a reduced-motion preference. AntD animates a lot by default, and
+   for some users that is not a preference but a medical requirement. */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* The graph canvas is focusable (WCAG 2.1 SC 2.1.1 —
+   arrow keys pan, +/- zoom, 0 fits). A focusable element with no visible
+   focus ring fails SC 2.4.7 and, more practically, leaves a keyboard user
+   unable to tell whether the arrow keys will move the graph or scroll the
+   page. Inset, because the canvas fills its container and an outside ring
+   would be clipped. */
+[role='application']:focus-visible {
+  outline: 3px solid #1677ff;
+  outline-offset: -3px;
+}

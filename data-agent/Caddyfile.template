@@ -1,0 +1,52 @@
+# =============================================================
+# Customer-side TLS terminator for the OOF data server.
+# Rendered by install.sh / update.sh (placeholders substituted).
+#
+# One address carries both services:
+#     /auth/*  → Keycloak   (the organisation's users log in here)
+#     /*       → data agent (the framework pushes and reads case data)
+#
+# TLS mode "letsencrypt": Caddy obtains and renews the certificate over
+# ACME; port 80 must be reachable for the HTTP-01 challenge.
+# TLS mode "internal":    Caddy issues a self-signed certificate (IP
+# addresses, LAN, tests). The framework must then run with
+# TLS_VERIFY_AGENT=false and TLS_VERIFY_IDP=false.
+# =============================================================
+
+{
+    __GLOBAL_OPTIONS__
+}
+
+https://__PUBLIC_HOST__ {
+    __TLS_DIRECTIVE__
+    encode zstd gzip
+
+    # `handle`, not `handle_path`: Keycloak runs with
+    # --http-relative-path=/auth and expects the prefix to survive.
+    handle /auth/* {
+        reverse_proxy keycloak:8080 {
+            header_up X-Forwarded-Proto https
+            header_up X-Forwarded-Port __HTTPS_PORT__
+        }
+    }
+
+    handle {
+        reverse_proxy agent:9000 {
+            header_up X-Forwarded-Proto https
+        }
+    }
+
+    header {
+        Strict-Transport-Security "max-age=31536000; includeSubDomains"
+        X-Content-Type-Options "nosniff"
+        X-Frame-Options "SAMEORIGIN"
+        -Server
+    }
+
+    log {
+        output file /data/access.log {
+            roll_size 10mb
+            roll_keep 5
+        }
+    }
+}

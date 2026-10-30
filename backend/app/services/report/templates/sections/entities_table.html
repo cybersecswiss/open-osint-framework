@@ -1,0 +1,39 @@
+{% if no_entities %}
+  <p class="muted">{{ no_entities }}</p>
+{% else %}
+  {% if scope %}<p class="muted">{{ scope }}</p>{% endif %}
+  {% if excluded %}<p class="muted" style="font-size: 8.5pt;">{{ excluded }}</p>{% endif %}
+  {% for group in groups %}
+    <h3>{{ group.header }}</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>{{ S.col_label }}</th>
+          <th style="width: 20%;">{{ S.col_source }}</th>
+          <th style="width: 28%;">{{ S.col_evidence }}</th>
+          <th style="width: 9%; text-align: right;">{{ S.col_confidence }}</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for e in group.rows %}
+          <tr>
+            <td>{{ e.label or '—' }}</td>
+            <td class="muted">
+              {% if e.corroborated_by and e.corroborated_by|length > 1 %}
+                {{ e.corroborated_by|join(', ') }}
+              {% else %}{{ e.source or '—' }}{% endif %}
+            </td>
+            <td class="muted" style="font-size: 8pt; word-break: break-all;">
+              {{ e.url or '—' }}
+            </td>
+            <td style="text-align: right;">
+              {% if e.admiralty %}
+                <span class="tag {% if e.corroborated_by and e.corroborated_by|length > 1 %}green{% endif %}">{{ e.admiralty }}</span>
+              {% else %}—{% endif %}
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% endfor %}
+{% endif %}

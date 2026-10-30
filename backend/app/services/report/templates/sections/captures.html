@@ -1,0 +1,22 @@
+{% if none_text %}
+  <p class="muted">{{ none_text }}</p>
+{% else %}
+  <p class="muted">{{ S.verify }}</p>
+  {% if more %}<p class="muted">{{ more }}</p>{% endif %}
+  {% for r in rows %}
+  <div style="page-break-inside: avoid; margin: 8pt 0 14pt 0;">
+    <h3 style="margin-bottom: 2pt;">{{ r.title }}</h3>
+    <p style="word-break: break-all; margin: 0;">{{ r.url }}</p>
+    <p class="muted" style="margin: 2pt 0;">
+      {{ r.when }} · {{ S.by }} {{ r.by }}{% if r.status %} · {{ S.status }} {{ r.status }}{% endif %}{% if r.tor %} · {{ S.tor }}{% endif %}
+    </p>
+    {% if r.redirects %}<p class="muted" style="word-break: break-all; margin: 2pt 0;">{{ S.redirects }}: {{ r.redirects }}</p>{% endif %}
+    <p style="font-family: 'DejaVu Sans Mono', monospace; font-size: 7.5pt; margin: 2pt 0;">
+      {{ S.shot }}: {{ r.shot }}<br/>{{ S.archive }}: {{ r.archive }}
+    </p>
+    {% if r.img %}
+      <img src="{{ r.img }}" style="max-width: 100%; max-height: 190mm; border: 1px solid #d9d9d9; margin-top: 4pt;" />
+    {% endif %}
+  </div>
+  {% endfor %}
+{% endif %}

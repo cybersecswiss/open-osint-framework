@@ -1,0 +1,38 @@
+{
+  "_comment": "User-facing changelog (DE/FR/IT/EN), shown in the handbook and the admin screen. scripts/release.sh copies the items of the entry whose version equals VERSION into the data-server manifest. Never put operator-internal details or attack paths here.",
+  "releases": [
+    {
+      "version": "2026.10.0",
+      "date": "2026-10-30",
+      "kind": "release",
+      "summary": {
+        "de": "Erste Open-Source-Version von OOF.",
+        "fr": "Première version open source de OOF.",
+        "it": "Prima versione open source di OOF.",
+        "en": "First open-source release of OOF."
+      },
+      "items": [
+        {
+          "id": "2026.10.0-01",
+          "type": "new",
+          "text": {
+            "de": "Geführte Installation (setup.sh) für einen Server (all-in-one) oder als Betreiber mit eigenen Datenservern je Organisation.",
+            "fr": "Installation guidée (setup.sh) sur un seul serveur (tout-en-un) ou en tant qu'opérateur avec un serveur de données par organisation.",
+            "it": "Installazione guidata (setup.sh) su un unico server (all-in-one) o come operatore con un server dati per organizzazione.",
+            "en": "Guided installation (setup.sh) on a single server (all-in-one) or as an operator with a data server per organisation."
+          }
+        },
+        {
+          "id": "2026.10.0-02",
+          "type": "new",
+          "text": {
+            "de": "Datenserver mit Let's Encrypt oder selbstsigniertem Zertifikat (IP-Adresse, LAN).",
+            "fr": "Serveur de données avec Let's Encrypt ou certificat auto-signé (adresse IP, LAN).",
+            "it": "Server dati con Let's Encrypt o certificato autofirmato (indirizzo IP, LAN).",
+            "en": "Data server with Let's Encrypt or a self-signed certificate (IP address, LAN)."
+          }
+        }
+      ]
+    }
+  ]
+}

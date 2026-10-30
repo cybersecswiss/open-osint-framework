@@ -1,0 +1,73 @@
+{
+  "title": "OSINT Platform — User Handbook",
+  "pages": [
+    {
+      "slug": "00-overview",
+      "title": "Overview"
+    },
+    {
+      "slug": "01-getting-started",
+      "title": "Getting started"
+    },
+    {
+      "slug": "02-cases",
+      "title": "Working with cases"
+    },
+    {
+      "slug": "03-searching",
+      "title": "Running a search"
+    },
+    {
+      "slug": "16-spelling-variants",
+      "title": "Spelling variants"
+    },
+    {
+      "slug": "04-modules-and-tools",
+      "title": "Modules & tools"
+    },
+    {
+      "slug": "15-companies-and-people",
+      "title": "Companies & people"
+    },
+    {
+      "slug": "05-telegram",
+      "title": "Telegram (deep)"
+    },
+    {
+      "slug": "06-reading-the-graph",
+      "title": "Reading the graph"
+    },
+    {
+      "slug": "12-assessing-findings",
+      "title": "Assessing findings"
+    },
+    {
+      "slug": "13-tracking-changes",
+      "title": "Tracking changes"
+    },
+    {
+      "slug": "11-ai-function",
+      "title": "The AI function"
+    },
+    {
+      "slug": "07-monitoring-and-alerts",
+      "title": "Monitoring & alerts"
+    },
+    {
+      "slug": "08-reports",
+      "title": "Reports"
+    },
+    {
+      "slug": "14-exporting",
+      "title": "Exporting a case"
+    },
+    {
+      "slug": "09-reference",
+      "title": "Reference & glossary"
+    },
+    {
+      "slug": "10-support",
+      "title": "Support & tickets"
+    }
+  ]
+}

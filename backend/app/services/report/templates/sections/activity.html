@@ -1,0 +1,21 @@
+{% if none_text %}
+  <p class="muted">{{ none_text }}</p>
+{% else %}
+<table>
+  <thead>
+    <tr><th>{{ S.col_when }}</th><th>{{ S.col_by }}</th><th>{{ S.col_action }}</th>
+        <th>{{ S.col_what }}</th><th>{{ S.col_purpose }}</th></tr>
+  </thead>
+  <tbody>
+    {% for r in rows %}
+    <tr>
+      <td class="muted">{{ r.when }}</td>
+      <td class="muted">{{ r.by }}</td>
+      <td><span class="tag">{{ r.action }}</span></td>
+      <td style="word-break: break-all;">{{ r.what }}</td>
+      <td>{% if r.purpose %}{{ r.purpose }}{% elif r.has_purpose_col %}<span class="muted">{{ S.no_purpose }}</span>{% endif %}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endif %}

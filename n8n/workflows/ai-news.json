@@ -1,0 +1,140 @@
+{
+  "id": "AiNewsGemini0001",
+  "name": "AI News Analysis",
+  "meta": {
+    "description": "News-KI-Analyse. Das Backend (POST /api/v1/news/ai-analyze) holt die passenden RSS-Artikel aus der DB und POSTet sie an den Webhook 'ai-news'. Der Prompt im Node 'Build Prompt' ist frei editierbar. Der Gemini-Node ist eine Vorlage — Modell/Credential in der UI final setzen. Es verlässt nur öffentlicher News-Inhalt die Grenze, keine Fall-Daten."
+  },
+  "nodes": [
+    {
+      "id": "webhook",
+      "name": "AI-News Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        240,
+        300
+      ],
+      "webhookId": "ai-news",
+      "parameters": {
+        "path": "ai-news",
+        "httpMethod": "POST",
+        "responseMode": "responseNode"
+      }
+    },
+    {
+      "id": "build_prompt",
+      "name": "Build Prompt",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        480,
+        300
+      ],
+      "parameters": {
+        "language": "javaScript",
+        "jsCode": "// ── EDIT THE PROMPT HERE ─────────────────────────────────────────────\n// The backend posts { query, articles, gemini_key, model }.\n// articles: [{title, summary, source_name, source_kind, published, url}]\n// (public news content only — no case data crosses to the provider).\nconst body = $json.body || $json;\nconst query = body.query || '';\nconst articles = (body.articles || []).map((a, i) => ({\n  n: i + 1, title: a.title, summary: a.summary,\n  source: a.source_name, kind: a.source_kind, date: a.published, url: a.url\n}));\n\nconst SYSTEM = `You are an OSINT analyst assistant for a law-enforcement tool.\nYou are given NEWS ARTICLES retrieved for the search term \"${query}\".\nGrounded ONLY in these articles (never invent, never use outside knowledge), produce:\n1) summary: a concise intelligence summary of what the sources report about the term (2-6 sentences, written in the language of the search term).\n2) entities: investigation-relevant named entities mentioned in the articles. For each: {entity_type, label, context, source_url, confidence}. entity_type MUST be one of: person, organization, username, email, phone, location, btc_address, eth_address, domain, url, telegram_user, onion_service, other. label = the value itself (the name / handle / address / place). context = a short phrase on why it matters. source_url = the url of the article it came from. confidence between 0 and 1.\n3) connections: plausible relationships BETWEEN the extracted entities, or between an entity and the search term. Each: {from_label, to_label, relation, rationale, confidence}. Use the entity labels EXACTLY as in entities; for the search term use its literal text.\n4) case_suggestions: short actionable suggestions of what an investigator should add to the case and why (array of strings).\nOmit anything the articles do not support. Do not output markdown. Respond ONLY as JSON with this exact shape:\n{\"summary\":\"\",\"entities\":[{\"entity_type\":\"\",\"label\":\"\",\"context\":\"\",\"source_url\":\"\",\"confidence\":0}],\"connections\":[{\"from_label\":\"\",\"to_label\":\"\",\"relation\":\"\",\"rationale\":\"\",\"confidence\":0}],\"case_suggestions\":[]}`;\n\nconst prompt = SYSTEM + `\\n\\nARTICLES:\\n` + JSON.stringify(articles, null, 1);\n\nconst geminiBody = {\n  contents: [{ parts: [{ text: prompt }] }],\n  generationConfig: { responseMimeType: \"application/json\", temperature: 0.2 }\n};\n\nreturn [{ json: {\n  query: query,\n  model: body.model || \"gemini-2.0-flash\",\n  gemini_key: body.gemini_key || \"\",\n  gemini_body: geminiBody\n} }];"
+      }
+    },
+    {
+      "id": "gemini",
+      "name": "Gemini",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        720,
+        300
+      ],
+      "onError": "continueRegularOutput",
+      "parameters": {
+        "method": "POST",
+        "url": "=https://generativelanguage.googleapis.com/v1beta/models/{{$json.model}}:generateContent?key={{$json.gemini_key}}",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.gemini_body) }}",
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "extract",
+      "name": "Extract JSON",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        960,
+        300
+      ],
+      "parameters": {
+        "language": "javaScript",
+        "jsCode": "// Gemini returns candidates[0].content.parts[0].text = the JSON string.\n// On an API error (quota/404/…) it returns { error: {...} } — surface it.\nconst r = $json;\nif (r && r.error) {\n  return [{ json: { error: 'Gemini: ' + (r.error.message || JSON.stringify(r.error)), code: r.error.code } }];\n}\nlet text = '';\ntry { text = r.candidates[0].content.parts[0].text; } catch (e) { text = ''; }\nlet parsed = {};\ntry { parsed = JSON.parse(text); } catch (e) { parsed = { error: 'model did not return valid JSON', raw: text }; }\n// Pass through exact token usage so the platform can account it.\nconst u = r.usageMetadata || {};\nparsed._usage = { prompt: u.promptTokenCount || 0, output: u.candidatesTokenCount || 0, total: u.totalTokenCount || 0 };\nreturn [{ json: parsed }];"
+      }
+    },
+    {
+      "id": "respond",
+      "name": "Respond",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        1200,
+        300
+      ],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify($json) }}"
+      }
+    }
+  ],
+  "connections": {
+    "AI-News Webhook": {
+      "main": [
+        [
+          {
+            "node": "Build Prompt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Prompt": {
+      "main": [
+        [
+          {
+            "node": "Gemini",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gemini": {
+      "main": [
+        [
+          {
+            "node": "Extract JSON",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract JSON": {
+      "main": [
+        [
+          {
+            "node": "Respond",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {},
+  "active": true
+}

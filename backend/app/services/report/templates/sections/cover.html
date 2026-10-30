@@ -1,0 +1,39 @@
+<div style="text-align: center; margin-top: 40mm;">
+  {% if classification %}
+    <div style="display: inline-block; border: 2px solid #cf1322; color: #cf1322;
+                font-weight: bold; font-size: 12pt; padding: 3mm 8mm; margin-bottom: 10mm;
+                letter-spacing: 0.5pt;">{{ classification }}</div><br/>
+  {% endif %}
+  {% if logo_b64 %}
+    <img src="{{ logo_b64 }}" alt="logo"
+         style="max-width: 80mm; max-height: 50mm; margin-bottom: 12mm;" />
+  {% endif %}
+  {% if org_name %}
+    <div style="font-size: 14pt; color: #595959; margin-bottom: 4mm;">{{ org_name }}</div>
+  {% endif %}
+
+  <h1 style="font-size: 26pt; margin: 14mm 0 4mm 0; color: #1677ff;">
+    {{ case_number }}
+  </h1>
+  <div style="font-size: 16pt; color: #262626; margin-bottom: 16mm;">
+    {{ case_title }}
+  </div>
+
+  <table style="margin: 0 auto; width: auto; border-collapse: collapse;">
+    <tr><td style="padding: 3pt 12pt; text-align: right; color: #8c8c8c;">{{ S.status }}</td>
+        <td style="padding: 3pt 12pt; text-align: left;"><span class="tag">{{ status }}</span></td></tr>
+    <tr><td style="padding: 3pt 12pt; text-align: right; color: #8c8c8c;">{{ S.priority }}</td>
+        <td style="padding: 3pt 12pt; text-align: left;"><span class="tag">{{ priority }}</span></td></tr>
+    {% if assigned_to %}
+    <tr><td style="padding: 3pt 12pt; text-align: right; color: #8c8c8c;">{{ S.assigned }}</td>
+        <td style="padding: 3pt 12pt; text-align: left;">{{ assigned_to }}</td></tr>
+    {% endif %}
+    <tr><td style="padding: 3pt 12pt; text-align: right; color: #8c8c8c;">{{ S.created }}</td>
+        <td style="padding: 3pt 12pt; text-align: left;">{{ created_at }} &middot; {{ created_by }}</td></tr>
+  </table>
+
+  <div style="margin-top: 30mm; color: #8c8c8c; font-size: 9pt;">
+    {{ S.generated }}: {{ generated_at }} {{ S.by }} {{ generated_by }}
+    <div style="margin-top: 3pt;">{{ tz_note }}</div>
+  </div>
+</div>

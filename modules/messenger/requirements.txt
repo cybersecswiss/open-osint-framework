@@ -1,0 +1,12 @@
+fastapi
+uvicorn[standard]
+pydantic
+httpx
+beautifulsoup4
+phonenumbers
+# Optional deep-collection path (Telethon). Present in the image so the
+# authenticated path is ready the moment a TELEGRAM_SESSION is set; all
+# imports are lazy so the module also runs fine keyless.
+telethon==1.36.0
+deep-translator==1.11.4
+langdetect==1.0.9

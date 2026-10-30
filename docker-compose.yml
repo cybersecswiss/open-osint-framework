@@ -1,0 +1,818 @@
+# =============================================================
+# OOF — framework stack
+# Domain-agnostic. All host references come from .env (PUBLIC_HOST).
+# The data server (data-agent/) is a separate compose project.
+# =============================================================
+
+name: oof
+
+networks:
+  internal:
+    driver: bridge
+  external:
+    driver: bridge
+  # Evidence capture only: the browser, the api that calls it, and Tor.
+  capture:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  redis_data:
+  n8n_data:
+  keycloak_data:
+  grafana_data:
+  prometheus_data:
+  messenger_media:
+  telegram_audit:
+  forums_cache:
+  audit_anchors:
+
+# Log rotation for every container. Without this the json-file driver grows
+# without bound — a couple of dozen containers on a small disk is how a disk
+# fills up silently. 10 MB x 3 files caps the stack at roughly 720 MB of logs.
+x-logging: &default-logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "3"
+
+services:
+
+  postgres:
+    logging: *default-logging
+    mem_limit: 1g
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: osint
+      POSTGRES_USER: osint
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_KEYCLOAK_PASSWORD: ${POSTGRES_KEYCLOAK_PASSWORD}
+      POSTGRES_N8N_PASSWORD: ${POSTGRES_N8N_PASSWORD}
+      POSTGRES_LICENSE_PASSWORD: ${POSTGRES_LICENSE_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      # Not in docker-entrypoint-initdb.d: there it would run a second time on
+      # its own (without the passwords) and abort the first initialisation.
+      - ./scripts/init-db.sql:/opt/oof-init/init-db.sql:ro
+      - ./scripts/init-databases.sh:/docker-entrypoint-initdb.d/01-init-databases.sh:ro
+    networks:
+      - internal
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U osint"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    logging: *default-logging
+    mem_limit: 256m
+    image: redis:7-alpine
+    command: ["redis-server", "--requirepass", "${REDIS_PASSWORD}", "--appendonly", "yes"]
+    volumes:
+      - redis_data:/data
+    networks:
+      - internal
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli -a $$REDIS_PASSWORD ping | grep -q PONG"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+
+  keycloak:
+    logging: *default-logging
+    mem_limit: 1200m
+    image: quay.io/keycloak/keycloak:24.0
+    command: ["start", "--import-realm"]
+    environment:
+      KEYCLOAK_ADMIN: ${KEYCLOAK_ADMIN_USER}
+      KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD}
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://postgres:5432/keycloak
+      KC_DB_USERNAME: keycloak
+      KC_DB_PASSWORD: ${POSTGRES_KEYCLOAK_PASSWORD}
+      # Pin the hostname so issuer/authorization URLs match what the
+      # browser actually uses. Without KC_HOSTNAME_PORT, Keycloak
+      # generates URLs without the :8443 → keycloak-js redirects to
+      # port 443 and dies. Set both explicitly.
+      KC_HOSTNAME: "${PUBLIC_HOST}"
+      # -1 on 443 (no port in issuer URLs); setup.sh writes it into .env.
+      KC_HOSTNAME_PORT: "${KC_HOSTNAME_PORT:-${PUBLIC_HTTPS_PORT}}"
+      KC_HOSTNAME_STRICT: "false"
+      KC_HOSTNAME_STRICT_HTTPS: "false"
+      KC_HTTP_ENABLED: "true"
+      KC_HTTP_RELATIVE_PATH: "/auth"
+      KC_PROXY: edge
+      # Single-node deployment — disable Infinispan clustering so this
+      # KC doesn't auto-discover and cluster with the customer-side
+      # data-agent KC over a shared docker network (which breaks realm
+      # routing in an all-in-one install).
+      KC_CACHE: local
+    volumes:
+      - ./keycloak/realm-export.json:/opt/keycloak/data/import/realm-export.json:ro
+      - keycloak_data:/opt/keycloak/data
+    networks:
+      # Explicit alias `framework-kc` so backend can
+      # reach this KC unambiguously when a customer-side KC also joins
+      # the network (which would otherwise share the default `keycloak`
+      # alias and cause docker-DNS round-robin to mis-route requests).
+      internal:
+        aliases:
+          - keycloak
+          - framework-kc
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  # Isolated updater sidecar: has the Docker socket, is internal-only (never
+  # published, never behind nginx), and can ONLY pull + recreate n8n. Powers
+  # the operator "update n8n" button without giving the internet-facing api
+  # any Docker access. Blast radius if the api is compromised: "update n8n".
+  updater:
+    logging: *default-logging
+    mem_limit: 128m
+    build: { context: ./updater }
+    environment:
+      # Its OWN key, not the platform-wide internal key: this sidecar is the
+      # only component with the Docker socket, so a leak of the internal key
+      # (which n8n and every backend caller hold) must not reach it.
+      INTERNAL_KEY: "${UPDATER_KEY:-${INTERNAL_KEY:-${API_SECRET_KEY}}}"
+      COMPOSE_PROJECT: "oof"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      # RO project mount so `docker compose` can read the compose file + .env.
+      - .:/project:ro
+    networks: [internal]
+    restart: unless-stopped
+
+  n8n:
+    logging: *default-logging
+    # Node.js; sat at 500 MB idle under 768m — too little headroom for a
+    # workflow run, so 1.5g.
+    mem_limit: 1536m
+    # Thin wrapper over n8nio/n8n:latest that auto-imports + activates the
+    # bundled workflows on start (n8n/Dockerfile + entrypoint.sh). The updater
+    # rebuilds with --pull to still track the latest upstream n8n.
+    build: { context: ./n8n }
+    image: oof-n8n:latest
+    environment:
+      # NOTE: no N8N_BASIC_AUTH_*. Those variables have been dead since
+      # n8n 1.0 (this runs 2.x) — n8n ignores them, so setting them only
+      # makes the stack *look* like it has basic auth in front of the editor.
+      # The real protection is n8n's own owner account plus the /n8n/ gate
+      # in nginx.
+      # If the n8n_data volume is ever recreated, n8n comes up with NO owner
+      # and the first visitor claims it — so keep the operator toggle
+      # (Product-Owner console → Settings → n8n access) OFF except while
+      # actually editing workflows. Owner credentials belong in the
+      # operator's password store, not in .env.
+      DB_TYPE: postgresdb
+      DB_POSTGRESDB_HOST: postgres
+      DB_POSTGRESDB_PORT: "5432"
+      DB_POSTGRESDB_DATABASE: n8n
+      DB_POSTGRESDB_USER: n8n
+      DB_POSTGRESDB_PASSWORD: ${POSTGRES_N8N_PASSWORD}
+      N8N_ENCRYPTION_KEY: ${N8N_ENCRYPTION_KEY}
+      # Served behind nginx at /n8n/ so the operator can reach the editor
+      # to tweak prompts / wire modules (AI-linking workflow etc.). N8N_PATH
+      # keeps the editor assets + webhooks under the /n8n/ prefix; the public
+      # WEBHOOK_URL/editor base make generated URLs correct.
+      N8N_HOST: "${PUBLIC_HOST}"
+      N8N_PORT: "5678"
+      N8N_PROTOCOL: "${PUBLIC_SCHEME}"
+      N8N_PATH: "/n8n/"
+      WEBHOOK_URL: "${PUBLIC_ORIGIN:-${PUBLIC_SCHEME}://${PUBLIC_HOST}:${PUBLIC_HTTPS_PORT}}/n8n/"
+      N8N_EDITOR_BASE_URL: "${PUBLIC_ORIGIN:-${PUBLIC_SCHEME}://${PUBLIC_HOST}:${PUBLIC_HTTPS_PORT}}/n8n/"
+      # Trust the nginx reverse proxy (1 hop) so n8n derives the external
+      # host:port/proto from X-Forwarded-* headers. Without this the push
+      # websocket's Origin check fails on the non-standard :8443 port
+      # (Origin example.org:8443 vs expected example.org) → "Connection
+      # lost" in the editor.
+      N8N_PROXY_HOPS: "1"
+      # n8n workflows authenticate against the license server and the
+      # backend's /monitoring/pending-scans with this header. This is the
+      # internal service key, NOT the platform master secret and NOT the
+      # updater key — n8n runs operator-editable workflow code, so it gets
+      # the narrowest credential that still lets those workflows work.
+      INTERNAL_KEY: "${INTERNAL_KEY:-${API_SECRET_KEY}}"
+      # We don't use Python code-nodes — disabling task runners silences
+      # the "Python 3 missing" startup warning and avoids spinning up
+      # an unused runner subprocess.
+      N8N_RUNNERS_ENABLED: "false"
+    volumes:
+      - n8n_data:/home/node/.n8n
+      - ./n8n/workflows:/home/node/.n8n/workflows:ro
+    networks:
+      - internal
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  prometheus:
+    logging: *default-logging
+    mem_limit: 512m
+    image: prom/prometheus:latest
+    volumes:
+      - ./monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    networks:
+      - internal
+    restart: unless-stopped
+
+  grafana:
+    logging: *default-logging
+    mem_limit: 256m
+    image: grafana/grafana:latest
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD}
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_SERVER_ROOT_URL: "${PUBLIC_ORIGIN:-${PUBLIC_SCHEME}://${PUBLIC_HOST}:${PUBLIC_HTTPS_PORT}}/grafana/"
+      GF_SERVER_SERVE_FROM_SUB_PATH: "true"
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./monitoring/grafana/dashboards:/etc/grafana/provisioning/dashboards:ro
+    networks:
+      - internal
+    restart: unless-stopped
+
+  # ----- OSINT modules (cybercrime focus, all manifest-driven) -----
+  # Adding a new module: drop a directory under modules/<name>/ with
+  # Dockerfile + main.py + tools/, declare it here, append a single
+  # entry to MODULE_REGISTRY in backend/app/services/osint_orchestrator.py.
+  # Backend hits /manifest on startup → frontend renders dynamically.
+
+  module-alias:
+    logging: *default-logging
+    mem_limit: 384m
+    build: { context: ./modules/alias }
+    networks: [internal]
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8010/health || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  module-leaks:
+    logging: *default-logging
+    mem_limit: 384m
+    build: { context: ./modules/leaks }
+    environment:
+      HIBP_API_KEY: "${HIBP_API_KEY:-}"
+    networks: [internal]
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8020/health || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  module-infra:
+    logging: *default-logging
+    mem_limit: 512m
+    build: { context: ./modules/infra }
+    environment:
+      # Optional .env fallback; the operator-global key from
+      # /glbadmin → Settings (passed per-request) takes precedence.
+      SHODAN_API_KEY: "${SHODAN_API_KEY:-}"
+      # Off by default — probes candidate origin addresses directly (docs/operations).
+      ENABLE_ORIGIN_RESOLVE: "${ENABLE_ORIGIN_RESOLVE:-false}"
+    networks: [internal]
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8030/health || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  module-threat:
+    logging: *default-logging
+    mem_limit: 256m
+    build: { context: ./modules/threat }
+    environment:
+      VIRUSTOTAL_API_KEY: "${VIRUSTOTAL_API_KEY:-}"
+      ABUSEIPDB_API_KEY: "${ABUSEIPDB_API_KEY:-}"
+      URLHAUS_API_KEY: "${URLHAUS_API_KEY:-}"
+    networks: [internal]
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8050/health || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  module-corporate:
+    logging: *default-logging
+    mem_limit: 384m
+    build: { context: ./modules/corporate }
+    networks: [internal]
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8150/health || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  # Tor SOCKS proxy — gives module-darknet a path to Ahmia's onion mirror
+  # (and other .onion services) so hidden-service searches return live
+  # results instead of a "open in Tor Browser" deep-link. Egress only;
+  # not exposed on the host. Bridge network provides the internet route.
+  tor:
+    logging: *default-logging
+    mem_limit: 256m
+    build: { context: ./tor }
+    networks: [internal, capture]
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "netstat -lnt 2>/dev/null | grep -q ':9050' || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 90s
+
+  module-darknet:
+    logging: *default-logging
+    mem_limit: 256m
+    build: { context: ./modules/darknet }
+    environment:
+      # Onion search engines (torch/tordex/tor66) go through the Tor SOCKS
+      # proxy — socks5h so .onion is resolved Tor-side. Empty → Ahmia over
+      # clearnet only (which still works and covers Tor's ~90s bootstrap).
+      TOR_SOCKS_PROXY: "${TOR_SOCKS_PROXY:-socks5h://tor:9050}"
+      # Filter hits against Ahmia's abuse blacklist (~58k hashed onions).
+      # On by default so investigators aren't pointed at abuse material they
+      # did not ask for. Set false when such material IS the target of the
+      # investigation — the number of withheld hits is always reported.
+      DARKNET_FILTER_ABUSE: "${DARKNET_FILTER_ABUSE:-true}"
+      # Max hidden services per search that reach the graph. Ahmia can
+      # return 2500 for a broad term; the note reports the true total.
+      DARKNET_MAX_RESULTS: "${DARKNET_MAX_RESULTS:-40}"
+      # onion_scrape: reads hidden-service CONTENT over Tor. Off by default.
+      ENABLE_ONION_SCRAPE: "${ENABLE_ONION_SCRAPE:-false}"
+      ONION_SCRAPE_MAX_PAGES: "${ONION_SCRAPE_MAX_PAGES:-3}"
+      ONION_SCRAPE_MAX_BYTES: "${ONION_SCRAPE_MAX_BYTES:-2000000}"
+      ONION_SCRAPE_TIMEOUT: "${ONION_SCRAPE_TIMEOUT:-60}"
+    depends_on: [tor]
+    networks: [internal]
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8060/health || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  module-messenger:
+    logging: *default-logging
+    mem_limit: 512m
+    build: { context: ./modules/messenger }
+    environment:
+      # Optional Telegram deep-collection (Telethon). All empty by
+      # default → module runs keyless. Set these to unlock full history,
+      # views/forwards, translation and media download. See docs/operations.en.md
+      # "Telegram deep collection".
+      TELEGRAM_API_ID: "${TELEGRAM_API_ID:-}"
+      TELEGRAM_API_HASH: "${TELEGRAM_API_HASH:-}"
+      TELEGRAM_SESSION: "${TELEGRAM_SESSION:-}"
+      TELEGRAM_TRANSLATE: "${TELEGRAM_TRANSLATE:-false}"
+      TELEGRAM_TRANSLATE_TARGET: "${TELEGRAM_TRANSLATE_TARGET:-en}"
+      TELEGRAM_DOWNLOAD_MEDIA: "${TELEGRAM_DOWNLOAD_MEDIA:-false}"
+      TELEGRAM_MAX_MEDIA_MB: "${TELEGRAM_MAX_MEDIA_MB:-50}"
+      TELEGRAM_DEFAULT_LIMIT: "${TELEGRAM_DEFAULT_LIMIT:-200}"
+      # username-hunt across known crime channels (curated list is
+      # bind-mounted below; comma-list here extends/overrides it).
+      TELEGRAM_CRIME_CHANNELS: "${TELEGRAM_CRIME_CHANNELS:-}"
+      TELEGRAM_HUNT_MAX_CHANNELS: "${TELEGRAM_HUNT_MAX_CHANNELS:-40}"
+      TELEGRAM_HUNT_CONCURRENCY: "${TELEGRAM_HUNT_CONCURRENCY:-8}"
+      TELEGRAM_HUNT_PER_CHANNEL_LIMIT: "${TELEGRAM_HUNT_PER_CHANNEL_LIMIT:-60}"
+    volumes:
+      - messenger_media:/data/telegram
+      # Curated crime-channel list — edit on the host, re-read per search.
+      - ./modules/messenger/config:/app/config
+    networks: [internal]
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8070/health || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  # Dating/adult username sweep. Off by default (ENABLE_DATING_SEARCH):
+  # results reveal information about a person's sex life.
+  module-dating:
+    logging: *default-logging
+    mem_limit: 256m
+    build: { context: ./modules/dating }
+    environment:
+      ENABLE_DATING_SEARCH: "${ENABLE_DATING_SEARCH:-false}"
+    networks: [internal]
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8130/health || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  module-forums:
+    logging: *default-logging
+    # The 830k-handle threat-actor index alone occupies ~345 MB once loaded,
+    # so a 384m limit leaves the container one allocation away from an
+    # OOM kill.
+    #
+    # 1g because of the SCHEDULED index refresh: a rebuild holds the loaded
+    # index AND the new dict being built at the same time (~345 MB + ~350 MB
+    # plus interpreter). At 512m that allocation kills the container, and an
+    # automatic refresh would turn a one-off accident into a weekly one.
+    mem_limit: 1g
+    build: { context: ./modules/forums }
+    environment:
+      # Uses the same Tor SOCKS proxy as module-darknet for the darknet
+      # forum sweep. The forum list resolves in three steps: the operator's
+      # list from the Owner console (options.forums) wins, then CRIME_FORUMS
+      # here, then the list built into the runner.
+      TOR_SOCKS_PROXY: "${TOR_SOCKS_PROXY:-socks5h://tor:9050}"
+      CRIME_FORUMS: "${CRIME_FORUMS:-}"
+      # One search-engine query per forum, so this bounds what one hunt
+      # costs. Set on the api too, from the SAME variable: the console
+      # displays this number, and a panel that reports a different cap than
+      # the module enforces would be exactly the kind of quiet lie the
+      # enabled/cap counter exists to prevent.
+      CRIME_FORUM_MAX: "${CRIME_FORUM_MAX:-40}"
+      # Wall-clock ceiling for ONE hunt, kept BELOW the orchestrator's 300 s
+      # cut for a `slow` tool. Above that cut the caller throws the run away
+      # and the investigator is told the module was unreachable; below it the
+      # same stall comes back as a partial result with a note. The same
+      # query can take 7 s or several minutes an hour apart — the spread is
+      # Tor, not the tool.
+      CRIME_FORUM_BUDGET: "${CRIME_FORUM_BUDGET:-240}"
+      # Both indexes read a refreshed copy here (falling back to the seed
+      # baked into the image) and the api's scheduler re-crawls into it.
+      # Named volume, so a refresh survives a rebuild — without that the
+      # scheduled refresh would silently reset to the baked seed on every
+      # deploy.
+      LINKBASE_CACHE: "/cache/linkbase_index.json"
+      THREAT_ACTORS_CACHE: "/cache/threat_actors.json.gz"
+    volumes:
+      - forums_cache:/cache
+    depends_on: [tor]
+    networks: [internal]
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8110/health || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  module-compliance:
+    logging: *default-logging
+    mem_limit: 256m
+    build: { context: ./modules/compliance }
+    environment:
+      OPENSANCTIONS_API_KEY: "${OPENSANCTIONS_API_KEY:-}"
+      # Point at a self-hosted yente for keyless screening; default is the
+      # key-gated hosted API.
+      OPENSANCTIONS_BASE: "${OPENSANCTIONS_BASE:-https://api.opensanctions.org}"
+    networks: [internal]
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8100/health || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  module-crypto:
+    logging: *default-logging
+    mem_limit: 256m
+    build: { context: ./modules/crypto }
+    environment:
+      ETHERSCAN_API_KEY: "${ETHERSCAN_API_KEY:-}"
+    networks: [internal]
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8080/health || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  # RSS/news search across official, media and cyber-security feeds.
+  # The feed list is maintained by the operator in the Owner console and
+  # arrives per search in options.feeds; feeds.json in the image is the
+  # fallback for a fresh install.
+  # Evidence capture: a real browser that saves a page as
+  # screenshot + MHTML with SHA-256. Fetches investigator-supplied URLs, so it
+  # sits on its OWN network with only api and tor — postgres, license,
+  # keycloak and the updater are not reachable from here (capture/main.py).
+  capture:
+    logging: *default-logging
+    build: { context: ./capture }
+    mem_limit: 1g
+    shm_size: 512m
+    environment:
+      TOR_SOCKS_PROXY: "${TOR_SOCKS_PROXY:-socks5h://tor:9050}"
+    networks: [capture]
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8160/health || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+
+  module-news:
+    logging: *default-logging
+    # Fetches ~17 feeds concurrently and parses them; a few hundred
+    # entries in memory at a time.
+    mem_limit: 384m
+    build: { context: ./modules/news }
+    environment:
+      NEWS_MAX_RESULTS: "${NEWS_MAX_RESULTS:-60}"
+      NEWS_MAX_AGE_DAYS: "${NEWS_MAX_AGE_DAYS:-1825}"
+      NEWS_FEED_TIMEOUT: "${NEWS_FEED_TIMEOUT:-25}"
+      NEWS_CONCURRENCY: "${NEWS_CONCURRENCY:-8}"
+      # Cache feed bodies; without it every search refetched every feed and
+      # newsd.admin.ch rate-limited us into ReadErrors.
+      NEWS_FEED_CACHE_TTL: "${NEWS_FEED_CACHE_TTL:-900}"
+      # Simultaneous requests to ONE host. 19 federal feeds share a host.
+      NEWS_PER_HOST_CONCURRENCY: "${NEWS_PER_HOST_CONCURRENCY:-2}"
+    networks: [internal]
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8140/health || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  module-image:
+    logging: *default-logging
+    mem_limit: 512m
+    build: { context: ./modules/image }
+    environment:
+      # visual_geolocate reuses the operator's Gemini key (passed per-run by
+      # the orchestrator as a credential); this only picks the vision model,
+      # kept in sync with the backend's AI default.
+      AI_GEMINI_MODEL: "${AI_GEMINI_MODEL:-gemini-3.6-flash}"
+    networks: [internal]
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8120/health || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  module-telegram:
+    logging: *default-logging
+    mem_limit: 512m
+    build: { context: ./modules/telegram }
+    environment:
+      # Authenticated MTProto scanner (Telethon). Shares the Telegram app
+      # credentials with module-messenger but uses its OWN pre-built
+      # session FILE (bind-mounted below), not the messenger StringSession.
+      TELEGRAM_API_ID: "${TELEGRAM_API_ID:-}"
+      TELEGRAM_API_HASH: "${TELEGRAM_API_HASH:-}"
+      TELEGRAM_SESSION_NAME: "/app/session/osint_scanner"
+      PORT: "8090"
+      MESSAGE_LIMIT: "${TELEGRAM_DEFAULT_LIMIT:-100}"
+      DELAY_BETWEEN_CHANNELS: "${TELEGRAM_DELAY_BETWEEN_CHANNELS:-2}"
+      MAX_MEDIA_BYTES: "${TELEGRAM_MAX_MEDIA_BYTES:-20971520}"
+      # Hash-chained, append-only evidentiary audit log.
+      AUDIT_LOG_PATH: "/data/audit/telegram-audit.jsonl"
+    volumes:
+      # Live Telethon session — sensitive, gitignored, never baked in the image.
+      - ./modules/telegram/session:/app/session
+      - telegram_audit:/data/audit
+    networks: [internal]
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8090/health || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  license:
+    logging: *default-logging
+    mem_limit: 256m
+    build:
+      context: ./license-server
+    environment:
+      DATABASE_URL: "postgresql+asyncpg://license_user:${POSTGRES_LICENSE_PASSWORD}@postgres:5432/license"
+      SECRET_KEY: "${API_SECRET_KEY}"
+      # Internal service-to-service secret. Split out of API_SECRET_KEY so
+      # the platform master secret is no longer shared with every caller;
+      # falls back to it when unset, so an old .env keeps working.
+      INTERNAL_KEY: "${INTERNAL_KEY:-${API_SECRET_KEY}}"
+      # Key-encryption key for CUSTOMER secrets in the licence DB
+      # (idp_backend_secret, SMTP password, webhook secret). Falls back to SECRET_KEY so an existing .env keeps
+      # working. ⚠️ Rotating it makes stored ciphertext unreadable; see
+      # license-server/app/crypto.py.
+      LICENSE_KEK: "${LICENSE_KEK:-${API_SECRET_KEY}}"
+    networks: [internal]
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:9000/health || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  api:
+    logging: *default-logging
+    mem_limit: 1g
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    environment:
+      DATABASE_URL: "postgresql+asyncpg://osint:${POSTGRES_PASSWORD}@postgres:5432/osint"
+      REDIS_URL: "redis://:${REDIS_PASSWORD}@redis:6379/0"
+      KEYCLOAK_URL: "http://framework-kc:8080/auth"
+      KEYCLOAK_REALM: "osint"
+      KEYCLOAK_CLIENT_ID: "osint-backend"
+      KEYCLOAK_CLIENT_SECRET: "${KEYCLOAK_CLIENT_SECRET}"
+      KEYCLOAK_PUBLIC_ISSUER: "${PUBLIC_ORIGIN:-${PUBLIC_SCHEME}://${PUBLIC_HOST}:${PUBLIC_HTTPS_PORT}}/auth/realms/osint"
+      # Separate product-owner realm + service-account client.
+      PLATFORM_REALM: "${PLATFORM_REALM:-platform}"
+      PLATFORM_KC_CLIENT_ID: "${PLATFORM_KC_CLIENT_ID:-platform-backend}"
+      PLATFORM_KC_CLIENT_SECRET: "${PLATFORM_KC_CLIENT_SECRET:-}"
+      TLS_VERIFY_IDP: "${TLS_VERIFY_IDP:-true}"
+      TLS_VERIFY_AGENT: "${TLS_VERIFY_AGENT:-true}"
+      LICENSE_SERVER_URL: "${LICENSE_SERVER_URL}"
+      N8N_URL: "${N8N_URL}"
+      N8N_API_KEY: "${N8N_API_KEY}"
+      # AI function provider (Phase-3 scaffold). gemini (default) → n8n
+      # ai-link workflow; local → ai-link-local against an OpenAI-compatible
+      # endpoint (Ollama/vLLM) for the sovereign, no-data-egress variant.
+      AI_PROVIDER: "${AI_PROVIDER:-gemini}"
+      AI_GEMINI_MODEL: "${AI_GEMINI_MODEL:-gemini-3.6-flash}"
+      AI_LOCAL_BASE_URL: "${AI_LOCAL_BASE_URL:-}"
+      AI_LOCAL_MODEL: "${AI_LOCAL_MODEL:-llama3.1}"
+      MODULE_ALIAS_URL: "${MODULE_ALIAS_URL}"
+      MODULE_LEAKS_URL: "${MODULE_LEAKS_URL}"
+      MODULE_INFRA_URL: "${MODULE_INFRA_URL}"
+      MODULE_THREAT_URL: "${MODULE_THREAT_URL}"
+      MODULE_DARKNET_URL: "${MODULE_DARKNET_URL}"
+      MODULE_MESSENGER_URL: "${MODULE_MESSENGER_URL}"
+      MODULE_CRYPTO_URL: "${MODULE_CRYPTO_URL}"
+      MODULE_TELEGRAM_URL: "${MODULE_TELEGRAM_URL}"
+      MODULE_COMPLIANCE_URL: "${MODULE_COMPLIANCE_URL:-http://module-compliance:8100}"
+      MODULE_FORUMS_URL: "${MODULE_FORUMS_URL:-http://module-forums:8110}"
+      MODULE_DATING_URL: "${MODULE_DATING_URL:-http://module-dating:8130}"
+      MODULE_IMAGE_URL: "${MODULE_IMAGE_URL:-http://module-image:8120}"
+      MODULE_NEWS_URL: "${MODULE_NEWS_URL:-http://module-news:8140}"
+      MODULE_CORPORATE_URL: "${MODULE_CORPORATE_URL:-http://module-corporate:8150}"
+      CAPTURE_URL: "${CAPTURE_URL:-http://capture:8160}"
+      # Only so the Owner console can display the cap module-forums enforces.
+      CRIME_FORUM_MAX: "${CRIME_FORUM_MAX:-40}"
+      SECRET_KEY: "${API_SECRET_KEY}"
+      # Role-split secrets (each falls back to API_SECRET_KEY when unset):
+      #   APIKEY_KEK   — Fernet KEK for the stored OSINT API keys. Rotate
+      #                  ONLY via scripts/rekey-apikeys.py.
+      #   INTERNAL_KEY — backend ↔ license-server / n8n → backend.
+      #   UPDATER_KEY  — the Docker-socket-holding updater sidecar only.
+      APIKEY_KEK: "${APIKEY_KEK:-${API_SECRET_KEY}}"
+      INTERNAL_KEY: "${INTERNAL_KEY:-${API_SECRET_KEY}}"
+      UPDATER_KEY: "${UPDATER_KEY:-${INTERNAL_KEY:-${API_SECRET_KEY}}}"
+      # Audit chain: keyed hashing (the key must not live in the DB the
+      # chain protects) + where the external anchors are written.
+      AUDIT_HMAC_KEY: "${AUDIT_HMAC_KEY:-${API_SECRET_KEY}}"
+      # full | hashed | off — what the operator-side audit keeps of a
+      # search selector. See services/audit.redact_selectors.
+      # Vorgabe: hashed. Der Betreiber ist Auftrags-
+      # verarbeiter, nicht Mitleser — `full` liesse ihn im eigenen
+      # Audit-Log sehen, WONACH ein Mandant gesucht hat. `hashed`
+      # speichert nur einen HMAC-Fingerabdruck: Wiederholungen bleiben
+      # korrelierbar, der Klartext ist weg. Die Schwaerzung greift VOR
+      # dem Kettenhash, ein Moduswechsel entwertet also keine
+      # bestehenden Eintraege (Kette und Anker verifizieren vor und nach
+      # dem Wechsel).
+      AUDIT_SELECTOR_MODE: "${AUDIT_SELECTOR_MODE:-hashed}"
+      AUDIT_ANCHOR_DIR: "/var/lib/osint/audit-anchors"
+      # Per-tenant agent URL override. Comma-style not supported; one
+      # AGENT_URL_<TENANT> per tenant. Checked before the license server's
+      # per-tenant agent URL; normally left empty.
+      AGENT_URL_DEFAULT: "${AGENT_URL_DEFAULT:-}"
+      PUBLIC_HOST: "${PUBLIC_HOST}"
+      PUBLIC_HTTP_PORT: "${PUBLIC_HTTP_PORT}"
+      PUBLIC_HTTPS_PORT: "${PUBLIC_HTTPS_PORT}"
+      PUBLIC_SCHEME: "${PUBLIC_SCHEME:-https}"
+      # Alert webhooks are refused when they resolve to a private address:
+      # the request leaves from inside this docker network, where
+      # `http://updater:9999` is reachable, so an administrator-supplied
+      # URL is an SSRF vector (the hole safe_fetch was written for). In a
+      # local test setup a receiver IS private, hence the switch — never set
+      # this in production.
+      NOTIFY_ALLOW_PRIVATE_TARGETS: "${NOTIFY_ALLOW_PRIVATE_TARGETS:-false}"
+      # OSINT-module API keys — the api reads these ONLY as a fallback so
+      # the Global-Admin Settings tab can show which keys are already
+      # active via .env. The authoritative store is the license-server
+      # (platform_settings); a value saved there overrides these. The
+      # modules still receive their own copies (below) as their fallback.
+      HIBP_API_KEY: "${HIBP_API_KEY:-}"
+      VIRUSTOTAL_API_KEY: "${VIRUSTOTAL_API_KEY:-}"
+      ABUSEIPDB_API_KEY: "${ABUSEIPDB_API_KEY:-}"
+      URLHAUS_API_KEY: "${URLHAUS_API_KEY:-}"
+      ETHERSCAN_API_KEY: "${ETHERSCAN_API_KEY:-}"
+      TELEGRAM_API_ID: "${TELEGRAM_API_ID:-}"
+      TELEGRAM_API_HASH: "${TELEGRAM_API_HASH:-}"
+      TELEGRAM_SESSION: "${TELEGRAM_SESSION:-}"
+    volumes:
+      # Audit-chain anchors. A named volume, i.e. outside Postgres and
+      # outside a DB restore — that separation is the whole point.
+      - audit_anchors:/var/lib/osint/audit-anchors
+      # The published agent release manifest — the admin screen compares the
+      # customer's agent against it (routers/admin.py update-status).
+      - ./data-agent/dist:/srv/agent-manifest:ro
+    networks:
+      - internal
+      - capture
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      keycloak:
+        condition: service_started
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8000/api/v1/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 8
+      start_period: 30s
+
+  frontend:
+    logging: *default-logging
+    mem_limit: 128m
+    build:
+      context: ./frontend
+      args:
+        VITE_API_URL: "${PUBLIC_ORIGIN:-${PUBLIC_SCHEME}://${PUBLIC_HOST}:${PUBLIC_HTTPS_PORT}}"
+        VITE_KEYCLOAK_URL: "${PUBLIC_ORIGIN:-${PUBLIC_SCHEME}://${PUBLIC_HOST}:${PUBLIC_HTTPS_PORT}}/auth"
+        VITE_KEYCLOAK_REALM: "osint"
+        VITE_KEYCLOAK_CLIENT_ID: "osint-frontend"
+    volumes:
+      # Customer wiki (user handbook) — served live so pages can be
+      # edited or added without a frontend rebuild. Source of truth:
+      # frontend/public/wiki/ (Markdown + index.json). Also baked into
+      # the image at build as a fallback.
+      - ./frontend/public/wiki:/usr/share/nginx/html/wiki:ro
+      # Lagebild catalogue — same idea: an operator keeps the fields of
+      # crime and their sources in step with the reports it cites, without
+      # a rebuild. Source of truth: frontend/public/threat-catalog/catalog.json.
+      - ./frontend/public/threat-catalog:/usr/share/nginx/html/threat-catalog:ro
+    networks: [internal]
+    restart: unless-stopped
+    healthcheck:
+      # BusyBox wget tries IPv6 first and fails on `localhost`; use the
+      # IPv4 literal explicitly. (--bind-address still misbehaves; the
+      # plain IPv4 form is the most reliable.)
+      test: ["CMD-SHELL", "wget -q -O- http://127.0.0.1:3000/ >/dev/null || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  nginx:
+    logging: *default-logging
+    mem_limit: 128m
+    image: nginx:alpine
+    ports:
+      - "${PUBLIC_HTTP_PORT:-80}:80"
+      - "${PUBLIC_HTTPS_PORT:-443}:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/conf.d:/etc/nginx/conf.d:ro
+      - ./certs:/etc/nginx/certs:ro
+      # ACME webroot. main.conf already serves /.well-known/acme-challenge/
+      # from /var/www/certbot, but nothing was mounted there — certbot wrote
+      # the challenge on the host and nginx served a 404, so the documented
+      # Let's Encrypt path could never have worked.
+      - ./acme-webroot:/var/www/certbot:ro
+      # Customer data-server release served at /agent/: ONLY the frozen
+      # output of scripts/release.sh (data-agent/dist/, gitignored) — never
+      # the data-agent directory itself, which holds .env and backups.
+      - ./data-agent/dist:/srv/agent-dist:ro
+    networks:
+      - external
+      - internal
+    restart: unless-stopped
+    depends_on:
+      - keycloak
