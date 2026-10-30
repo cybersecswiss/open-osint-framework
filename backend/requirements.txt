@@ -21,7 +21,7 @@ python-dateutil==2.9.0.post0
 # pydyf MUST be pinned to a version compatible with WeasyPrint —
 # pydyf >=0.11 broke the API ('super' object has no attribute 'transform')
 # for WeasyPrint 62.x. Keep them coordinated when bumping.
-weasyprint==62.3
+weasyprint==70.0
 pydyf==0.10.0
 jinja2==3.1.4
 # Report as Word (services/report/docx_export.py). Image
